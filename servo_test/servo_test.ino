@@ -13,8 +13,6 @@ const int BUTTON_PIN = 2;
 const int ledPin =  A1;      // the number of the LED pin
 
 
-int angle = 0;
-
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
 
@@ -25,17 +23,21 @@ void setup()
   pinMode(ledPin, OUTPUT);
   pinMode( BUTTON_PIN, INPUT);
   servo.begin();
-  servo.setAngle( angle, 1000 );
   
   Orion.begin(); 
   Orion.tone(NOTE_C6,100); 
-  Orion.setAngle( SPI_SERVO_PIN, angle );
   Orion.setServoMin( SPI_SERVO_PIN, -900 );
   Orion.setServoMax( SPI_SERVO_PIN, 900 );
 }
 
 void loop()
 {
+  if(Orion.checkLipo())
+  {
+    Orion.stopPulse( SPI_SERVO_PIN );
+    servo.stopPulse();
+    return; //Battery too low to do anything.
+  }
   servo.update();
 
   buttonState = digitalRead( BUTTON_PIN );
