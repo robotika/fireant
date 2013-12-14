@@ -20,9 +20,14 @@ void setup()
   Orion.tone(NOTE_C6,100); 
   Orion.stopPulse( IN_SERVO_PIN ); // it is by default, but this way it is more clear
   Orion.setAOffset( IN_SERVO_PIN, 0 );
+  Orion.setServoMin( IN_SERVO_PIN, -900 );
+  Orion.setServoMax( IN_SERVO_PIN, 900 );
   Orion.setAOffset( OUT_SERVO_PIN, 0 );
+  Orion.setServoMin( OUT_SERVO_PIN, -900 );
+  Orion.setServoMax( OUT_SERVO_PIN, 900 );
+  
   pinMode( BUTTON_PIN, INPUT);   
-  calibrated = false;
+  calibrated = true; // calibration disabled ... not working ... was false;
 }
 
 void loop()
@@ -46,6 +51,9 @@ void loop()
     {
       Orion.green( true );
       Orion.setAOffset( IN_SERVO_PIN, Orion.queryFBAngle( IN_SERVO_PIN ) );
+      Orion.setServoMin( IN_SERVO_PIN, Orion.queryFBAngle( IN_SERVO_PIN ) - 300 );
+      Orion.setServoMax( IN_SERVO_PIN, Orion.queryFBAngle( IN_SERVO_PIN ) + 300 );
+      Orion.setAOffset( OUT_SERVO_PIN, Orion.queryFBAngle( OUT_SERVO_PIN ) );
       Orion.setServoMin( OUT_SERVO_PIN, Orion.queryFBAngle( OUT_SERVO_PIN ) - 300 );
       Orion.setServoMax( OUT_SERVO_PIN, Orion.queryFBAngle( OUT_SERVO_PIN ) + 300 );
       Orion.writeRegisters();
