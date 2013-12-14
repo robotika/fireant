@@ -6,6 +6,9 @@
 #include <Orion.h>
 #include <SPI.h>
 
+const int SERVO_MIN = -300;
+const int SERVO_MAX = 300;
+
 const int IN_SERVO_PIN = 0;
 const int OUT_SERVO_PIN = 1;
 
@@ -16,15 +19,18 @@ int buttonState = 0;         // variable for reading the pushbutton status
 
 void setup()
 {
+  Serial.begin( 9600 );
+  Serial.print( "TeleOperation test ...\n" );
+
   Orion.begin(); 
   Orion.tone(NOTE_C6,100); 
   Orion.stopPulse( IN_SERVO_PIN ); // it is by default, but this way it is more clear
   Orion.setAOffset( IN_SERVO_PIN, 0 );
-  Orion.setServoMin( IN_SERVO_PIN, -900 );
-  Orion.setServoMax( IN_SERVO_PIN, 900 );
+  Orion.setServoMin( IN_SERVO_PIN, SERVO_MIN );
+  Orion.setServoMax( IN_SERVO_PIN, SERVO_MAX );
   Orion.setAOffset( OUT_SERVO_PIN, 0 );
-  Orion.setServoMin( OUT_SERVO_PIN, -900 );
-  Orion.setServoMax( OUT_SERVO_PIN, 900 );
+  Orion.setServoMin( OUT_SERVO_PIN, SERVO_MIN );
+  Orion.setServoMax( OUT_SERVO_PIN, SERVO_MAX );
   
   pinMode( BUTTON_PIN, INPUT);   
   calibrated = true; // calibration disabled ... not working ... was false;
@@ -40,9 +46,16 @@ void loop()
   buttonState = digitalRead( BUTTON_PIN );
   if( calibrated )
   {
-    Orion.setTime( 1000 );
-    Orion.setAngle( OUT_SERVO_PIN, Orion.queryFBAngle( IN_SERVO_PIN ) );
-    Orion.execute();   
+    int angle = Orion.queryFBAngle( IN_SERVO_PIN );
+    
+    if( angle < SERVO_MIN || angle > SERVO_MAX )
+      Serial.println( angle );
+    else
+    {
+      Orion.setTime( 1000 );
+      Orion.setAngle( OUT_SERVO_PIN, angle );
+      Orion.execute();
+    }
   }
   else
   {
