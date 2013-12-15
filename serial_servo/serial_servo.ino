@@ -24,6 +24,7 @@ const int SERVO_MAX = 1200;
 #define LMT 18 
 
 const unsigned char servoPins[] = { LMC, LMF, LMT };
+const unsigned int NUM_SERVOS = sizeof(servoPins)/sizeof(unsigned char);
 
 void setup()
 {
@@ -33,7 +34,7 @@ void setup()
   Orion.begin(); 
   Orion.tone(NOTE_F6,100); 
   int i;
-  for( i = 0; i < sizeof(servoPins)/sizeof(int); i++ )
+  for( i = 0; i < NUM_SERVOS; i++ )
   { 
     Orion.stopPulse( servoPins[i] ); // it is by default, but this way it is more clear
     Orion.setServoMin( servoPins[i], SERVO_MIN );
@@ -46,13 +47,13 @@ void loop()
   int i;
   if(Orion.checkLipo())
   {
-    for( i = 0; i < sizeof(servoPins)/sizeof(int); i++ )
+    for( i = 0; i < NUM_SERVOS; i++ )
       Orion.stopPulse( servoPins[i] ); // it is by default, but this way it is more clear
     return; //Battery too low to do anything.
   }
   
   Serial.write( START_BLOCK );
-  for( i = 0; i < sizeof(servoPins)/sizeof(int); i++ )
+  for( i = 0; i < NUM_SERVOS; i++ )
   {
     int angle = Orion.queryFBAngle( servoPins[i] );    
     if( angle < SERVO_MIN || angle > SERVO_MAX )
