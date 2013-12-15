@@ -96,7 +96,15 @@ def readServos( com ):
       b = com.read(1)
     if b == END_BLOCK:
       return ret
-      
+
+def writeServos( com, servos ):
+  com.write( START_BLOCK )
+  for s in servos:
+    if s == None:
+      com.write( STOP_SERVO )
+    else:
+      com.write( chr( ctypes.c_ubyte(s).value ) )
+  com.write( END_BLOCK )
 
 
 def main( filename=None ):
@@ -105,7 +113,10 @@ def main( filename=None ):
   else:
     com = LogIt( serial.Serial( 'COM8',9600 ) )
   for i in xrange(100):
-    print readServos( com )
+    servos = readServos( com )
+    if filename:
+      print servos # debug
+    writeServos( com, servos )
 
 
 if __name__ == "__main__":
