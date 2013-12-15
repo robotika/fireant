@@ -106,18 +106,37 @@ def writeServos( com, servos ):
       com.write( chr( ctypes.c_ubyte(s).value ) )
   com.write( END_BLOCK )
 
+def stepServos( servos ):
+  if None not in servos:
+    return [x+1 for x in servos]
+  return servos
+
+
+CMD_STOP = [None]*3
+CMD_CENTER = [90, 18, -5] 
+
+def sendServoSeq( com, cmd, num, info=None, verbose=False ):
+  if info:
+    print info
+  for i in xrange( num ):
+    servos = readServos( com )
+    if verbose:
+      print servos, cmd # debug
+    writeServos( com, cmd )
+
 
 def main( filename=None ):
   if filename:
     com = ReplyLog( filename )
+    verbose = True
   else:
     com = LogIt( serial.Serial( 'COM8',9600 ) )
-  for i in xrange(100):
-    servos = readServos( com )
-    if filename:
-      print servos # debug
-    writeServos( com, servos )
-
+    verbose = False
+#  sendServoSeq( com, CMD_STOP, 10, "init...", verbose )
+  sendServoSeq( com, CMD_CENTER, 100, "center ...", verbose )
+  sendServoSeq( com, [70, -40, 60], 100, "moving ...", verbose )
+  sendServoSeq( com, CMD_CENTER, 100, "center ...", verbose )
+  sendServoSeq( com, CMD_STOP, 10, "stopping...", verbose )
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:

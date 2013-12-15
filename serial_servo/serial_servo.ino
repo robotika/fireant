@@ -33,13 +33,6 @@ void setup()
 
   Orion.begin(); 
   Orion.tone(NOTE_F6,100); 
-  int i;
-  for( i = 0; i < NUM_SERVOS; i++ )
-  { 
-    Orion.stopPulse( servoPins[i] ); // it is by default, but this way it is more clear
-    Orion.setServoMin( servoPins[i], SERVO_MIN );
-    Orion.setServoMax( servoPins[i], SERVO_MAX );
-  }
 }
 
 void sendServos()
@@ -82,10 +75,19 @@ void receiveServos()
     i = 0;
     while( b != START_BLOCK && b != END_BLOCK && i < NUM_SERVOS )
     {
-      if( b == SERVO_OUT_OF_RANGE )
+      if( b == STOP_SERVO )
         Orion.stopPulse( servoPins[i] );
       else
-        Orion.setAngle( servoPins[i], (int)((signed char)b)*10 );
+      {
+        int angle = (int)((signed char)b)*10;
+        if( angle < SERVO_MIN || angle > SERVO_MAX )
+        {
+          Orion.red( true );
+          Orion.stopPulse( servoPins[i] );
+        }
+        else
+          Orion.setAngle( servoPins[i], angle );
+      }
       b = blockedRead();
       i++;
     }
