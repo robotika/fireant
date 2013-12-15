@@ -5,6 +5,12 @@
 import sys
 import serial 
 import datetime
+import ctypes
+
+class LogEnd(Exception):
+  "End of log notification"
+  pass 
+
 
 class LogIt():
   "Log communication via serial com"
@@ -70,6 +76,27 @@ class ReplyLog():
 
 #-------------------------------------------------------------------
 
+START_BLOCK = chr(0x80)
+END_BLOCK = chr(0x81)
+STOP_SERVO = chr(0x82)
+SERVO_OUT_OF_RANGE = chr(0x83)
+
+def readServos( com ):
+  ret = []
+  b = com.read(1)
+  while True:
+    while b != START_BLOCK:
+      b = com.read(1)
+    b = com.read(1)
+    while b != START_BLOCK and b != END_BLOCK:
+      if b == SERVO_OUT_OF_RANGE:
+        ret.append( None )
+      else:
+        ret.append( ctypes.c_byte(ord(b)).value )
+      b = com.read(1)
+    if b == END_BLOCK:
+      return ret
+      
 
 
 def main( filename=None ):
@@ -78,7 +105,7 @@ def main( filename=None ):
   else:
     com = LogIt( serial.Serial( 'COM8',9600 ) )
   for i in xrange(100):
-    com.read(1)
+    print readServos( com )
 
 
 if __name__ == "__main__":
