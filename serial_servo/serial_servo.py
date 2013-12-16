@@ -6,6 +6,7 @@ import sys
 import serial 
 import datetime
 import ctypes
+import math
 
 class LogEnd(Exception):
   "End of log notification"
@@ -125,6 +126,40 @@ def sendServoSeq( com, cmd, num, info=None, verbose=False ):
     writeServos( com, cmd )
 
 
+class Unsolvable(Exception):
+  pass
+
+def robustACos( value ):
+  "make sure that value is within defined limits"
+  return math.acos( max(-1.0, min(1.0, value)) )
+
+def triangleAngles( a, b, c ):
+  # cosinus theorem ... a*a = b*b + c*c - 2*b*c*cos(alpha)
+  alpha = robustACos( (b*b + c*c - a*a)/(2.0*b*c) )
+  beta = robustACos( (a*a + c*c - b*b)/(2.0*a*c) )
+  gama = robustACos( (a*a + b*b - c*c)/(2.0*a*b) )
+  return alpha, beta, gama
+
+def pos2angles( xyz, abc ):
+  "convert position into angles for arm with lengths a, b, c"
+  # a is closest to the body
+  (x,y,z) = xyz
+  (a,b,c) = abc
+  a1 = math.atan2( y, x ) 
+  d = math.hypot( x, y )
+  if a > d:
+    raise Unsolvable()
+  ta,tb,tc = triangleAngles( b, c, d-a ) # TODO z-coordinate
+  a2 = math.atan2( z, d - a )
+  return tuple([int(math.degrees(angle)) for angle in [a1, a2+tb, tc]] )
+
+def pos2cmd( xyz ):
+  "convert angles and handle direction with offset"
+  c = (94, 38, 86-180)
+  a = pos2angles( xyz, abc = (0.05, 0.08, 0.135) )
+  print "angles", a
+  return [c[0]+a[0], c[1]-a[1], c[2]+a[2]]
+
 def main( filename=None ):
   if filename:
     com = ReplyLog( filename )
@@ -132,10 +167,13 @@ def main( filename=None ):
   else:
     com = LogIt( serial.Serial( 'COM8',9600 ) )
     verbose = False
-#  sendServoSeq( com, CMD_STOP, 10, "init...", verbose )
-  sendServoSeq( com, CMD_CENTER, 100, "center ...", verbose )
-  sendServoSeq( com, [70, -40, 60], 100, "moving ...", verbose )
-  sendServoSeq( com, CMD_CENTER, 100, "center ...", verbose )
+
+  num = 20
+  for y in [-0.05, 0, 0.05]:
+    sendServoSeq( com, pos2cmd( (0.2, y, 0.05) ), num, "move", verbose )
+    sendServoSeq( com, pos2cmd( (0.2, y, -0.05) ), num, "down", verbose )
+    sendServoSeq( com, pos2cmd( (0.2, y, 0.05) ), num, "up", verbose )
+  
   sendServoSeq( com, CMD_STOP, 10, "stopping...", verbose )
 
 if __name__ == "__main__":

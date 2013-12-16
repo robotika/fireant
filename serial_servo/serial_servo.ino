@@ -65,7 +65,7 @@ void receiveServos()
   int b;
   int i;
   Orion.green(true);
-  Orion.setTime( 1000 );
+  Orion.setTime( 100 );
   b = blockedRead();
   while( true )
   {
