@@ -156,9 +156,24 @@ def pos2angles( xyz, abc ):
 def pos2cmd( xyz ):
   "convert angles and handle direction with offset"
   c = (94, 38, 86-180)
-  a = pos2angles( xyz, abc = (0.05, 0.08, 0.135) )
+  a = pos2angles( xyz, abc = (0.0525, 0.0802, 0.1283) )  # was (0.05, 0.08, 0.135)
   print "angles", a
   return [c[0]+a[0], c[1]-a[1], c[2]+a[2]]
+
+def play( com, music, verbose ):
+  num = 20
+  xDist = 0.18
+  zUp, zDown = 0.00, -0.063
+  yStep = 0.026 # real measure = 0.0228
+  m = dict( zip("AGFEDC", [i*yStep for i in xrange(-2,4)] ) )
+  for t,l in zip(music[::2], music[1::2]):
+    y = m[t] # tone to movement
+    print "Play", t
+    sendServoSeq( com, pos2cmd( (xDist, y, zUp) ), num/2, "move", verbose )
+    sendServoSeq( com, pos2cmd( (xDist, y, zDown) ), int(l)*num, "down", verbose )
+    sendServoSeq( com, pos2cmd( (xDist, y, zUp) ), num/2, "up", verbose )
+  
+  sendServoSeq( com, CMD_STOP, 10, "stopping...", verbose )
 
 def main( filename=None ):
   if filename:
@@ -167,14 +182,8 @@ def main( filename=None ):
   else:
     com = LogIt( serial.Serial( 'COM8',9600 ) )
     verbose = False
-
-  num = 20
-  for y in [-0.05, 0, 0.05]:
-    sendServoSeq( com, pos2cmd( (0.2, y, 0.05) ), num, "move", verbose )
-    sendServoSeq( com, pos2cmd( (0.2, y, -0.05) ), num, "down", verbose )
-    sendServoSeq( com, pos2cmd( (0.2, y, 0.05) ), num, "up", verbose )
-  
-  sendServoSeq( com, CMD_STOP, 10, "stopping...", verbose )
+#  play( com, "C2A2C2A2", verbose )
+  play( com, "C1D1E1F1G2G2A2A2G2F1F1F1F1E2E2D2D2C2", verbose )
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:
