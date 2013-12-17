@@ -161,17 +161,18 @@ def pos2cmd( xyz ):
   return [c[0]+a[0], c[1]-a[1], c[2]+a[2]]
 
 def play( com, music, verbose ):
-  num = 20
+  numMove = 5
+  numTone = 20
   xDist = 0.18
-  zUp, zDown = 0.00, -0.063
+  zUp, zDown = -0.01, -0.063
   yStep = 0.026 # real measure = 0.0228
   m = dict( zip("AGFEDC", [i*yStep for i in xrange(-2,4)] ) )
   for t,l in zip(music[::2], music[1::2]):
     y = m[t] # tone to movement
     print "Play", t
-    sendServoSeq( com, pos2cmd( (xDist, y, zUp) ), num/2, "move", verbose )
-    sendServoSeq( com, pos2cmd( (xDist, y, zDown) ), int(l)*num, "down", verbose )
-    sendServoSeq( com, pos2cmd( (xDist, y, zUp) ), num/2, "up", verbose )
+    sendServoSeq( com, pos2cmd( (xDist, y, zUp) ), numMove, "move", verbose )
+    sendServoSeq( com, pos2cmd( (xDist, y, zDown) ), int(l)*numTone, "down", verbose )
+    sendServoSeq( com, pos2cmd( (xDist, y, zUp) ), numMove, "up", verbose )
   
   sendServoSeq( com, CMD_STOP, 10, "stopping...", verbose )
 
@@ -183,7 +184,8 @@ def main( filename=None ):
     com = LogIt( serial.Serial( 'COM8',9600 ) )
     verbose = False
 #  play( com, "C2A2C2A2", verbose )
-  play( com, "C1D1E1F1G2G2A2A2G2F1F1F1F1E2E2D2D2C2", verbose )
+#  play( com, "C1D1E1F1G2G2A2A2G2F1F1F1F1E2E2D2D2C2", verbose ) # Kocka leze dirou
+  play( com, "E1E1E2E1E1E2E1G1C2D1E2F1F1F1F1F1E1E2E1D1D1E1D2", verbose ) # Jingle Bells
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:
