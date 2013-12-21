@@ -20,8 +20,9 @@ PACKET_START = chr(0xAB)
 ECHO_CHAR = 'D'
 STOP_SERVO = -32768 # 0x8000
 
+verbose = False
 
-def readRobotStatus( com, verbose ):
+def readRobotStatus( com ):
   while com.read(1) != PACKET_START:
     pass
   size = ord(com.read(1))
@@ -33,7 +34,7 @@ def readRobotStatus( com, verbose ):
     print raw
   return raw
   
-def writeRobotCmd( com, verbose ):
+def writeRobotCmd( com ):
   servoTime = 100 # in ms
   buf = struct.pack( "HHHhhh", 0, 0xFFFF, servoTime, STOP_SERVO, STOP_SERVO, 0 )
   com.write( PACKET_START )
@@ -43,6 +44,8 @@ def writeRobotCmd( com, verbose ):
 
 
 def main( filename=None ):
+  global verbose
+
   if filename:
     com = ReplyLog( filename )
     verbose = True
@@ -51,8 +54,8 @@ def main( filename=None ):
     verbose = False
 
   for i in xrange(30):
-    readRobotStatus( com, verbose )
-    writeRobotCmd( com, verbose )
+    readRobotStatus( com )
+    writeRobotCmd( com )
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:
