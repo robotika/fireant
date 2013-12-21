@@ -51,16 +51,18 @@ void updateRobotStatus()
   }
 }
 
-#define SEND_WITH_CHECKSUM(X) { Serial.write( (X) ); tmpSum += (X); }
-
 void sendRobotStatus()
 {
   int i;
-  uint8_t tmpSum = 0; 
+  uint8_t tmpSum; 
   Serial.write( PACKET_START );
-  SEND_WITH_CHECKSUM( sizeof(RobotStatus) );
+  Serial.write( sizeof(RobotStatus) );
+  tmpSum = sizeof(RobotStatus);
   for( i = 0; i < sizeof(RobotStatus); i++ )
-    SEND_WITH_CHECKSUM( ((uint8_t*)&robotStatus)[i] );
+  {
+    Serial.write( ((uint8_t*)&robotStatus)[i] );
+    tmpSum += ((uint8_t*)&robotStatus)[i];
+  }
   Serial.write( -tmpSum );
 }
 
