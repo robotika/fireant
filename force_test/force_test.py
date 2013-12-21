@@ -18,18 +18,28 @@ from serial_servo import LogIt, ReplyLog
 
 PACKET_START = chr(0xAB)
 ECHO_CHAR = 'D'
+STOP_SERVO = -32768 # 0x8000
+
 
 def readRobotStatus( com, verbose ):
   while com.read(1) != PACKET_START:
     pass
   size = ord(com.read(1))
   chSum = size;
-  buf = com.read( size )
+  buf = com.read( size + 1 ) # read data + checksum
   assert (size+sum([ord(x) for x in buf])) % 256 == 0, [hex(ord(x)) for x in buf]
   raw = struct.unpack_from( ">HHhhhhhh", buf ) # big indian
   if verbose:
     print raw
+  return raw
   
+def writeRobotCmd( com, verbose ):
+  servoTime = 100 # in ms
+  buf = struct.pack( ">HHHhhh", 0, 0xFFFF, servoTime, STOP_SERVO, STOP_SERVO, STOP_SERVO )
+  com.write( PACKET_START )
+  com.write( chr(len(buf)) )
+  com.write( buf )
+  com.write( chr( (-sum([ord(x) for x in buf])-len(buf)) % 256 ) )
 
 
 def main( filename=None ):
@@ -42,6 +52,7 @@ def main( filename=None ):
 
   for i in xrange(30):
     readRobotStatus( com, verbose )
+    writeRobotCmd( com, verbose )
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:
