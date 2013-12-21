@@ -16,7 +16,7 @@ const unsigned int NUM_SERVOS = sizeof(servoPins)/sizeof(unsigned char);
 const uint8_t ECHO_CHAR = 'D'; // in memory of Daisy robot
 const uint8_t PACKET_START = 0xAB;
 
-const int16_t STOP_SERVO = 0x8000;
+const int16_t STOP_SERVO = -32768;
 
 struct ServoStatus
 {
@@ -51,24 +51,19 @@ void updateRobotStatus()
   }
 }
 
-#define SEND8_WITH_CHECKSUM(X) Serial.write( (X) ); tmpSum += (X); 
-#define SEND16_WITH_CHECKSUM(X) {Serial.write( (X>>8) ); tmpSum += (X>>8); Serial.write( (X & 0xFF) ); tmpSum += (X & 0xFF);}
+#define SEND_WITH_CHECKSUM(X) { Serial.write( (X) ); tmpSum += (X); }
 
 void sendRobotStatus()
 {
   int i;
-  uint8_t tmpSum; 
+  uint8_t tmpSum = 0; 
   Serial.write( PACKET_START );
-  SEND8_WITH_CHECKSUM( sizeof(RobotStatus) );
-  SEND16_WITH_CHECKSUM( robotStatus.time );
-  SEND16_WITH_CHECKSUM( robotStatus.voltage );
-  for( i = 0; i < NUM_SERVOS; i++ )
-  {
-    SEND16_WITH_CHECKSUM( robotStatus.servo[i].position );    
-    SEND16_WITH_CHECKSUM( robotStatus.servo[i].force );
-  }
+  SEND_WITH_CHECKSUM( sizeof(RobotStatus) );
+  for( i = 0; i < sizeof(RobotStatus); i++ )
+    SEND_WITH_CHECKSUM( ((uint8_t*)&robotStatus)[i] );
   Serial.write( -tmpSum );
 }
+
 
 int blockedRead()
 {
@@ -105,13 +100,27 @@ void receiveRobotCmd()
     {
       // checksum error
       Orion.red( true );
-      Orion.tone(NOTE_H6,100); 
+      Orion.tone(NOTE_G6,100); 
       continue;
     }
     break;
   }
   Orion.green( false );
 }
+
+void executeRobotCmd()
+{
+  Orion.setTime( robotCmd.servoTime );
+  int i;
+  for( i = 0; i < NUM_SERVOS; i++ )
+    if( robotCmd.servoAngle[i] == STOP_SERVO )
+      Orion.stopPulse( servoPins[i] );
+    else
+      Orion.setAngle( servoPins[i], robotCmd.servoAngle[i] );
+  Orion.execute();
+}
+
+//----------------------------------------------------
 
 void setup()
 {
@@ -136,5 +145,6 @@ void loop()
       Orion.stopPulse( servoPins[i] ); // it is by default, but this way it is more clear
     return; //Battery too low to do anything.
   }
+  executeRobotCmd();
 }
 

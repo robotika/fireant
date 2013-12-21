@@ -28,14 +28,14 @@ def readRobotStatus( com, verbose ):
   chSum = size;
   buf = com.read( size + 1 ) # read data + checksum
   assert (size+sum([ord(x) for x in buf])) % 256 == 0, [hex(ord(x)) for x in buf]
-  raw = struct.unpack_from( ">HHhhhhhh", buf ) # big indian
+  raw = struct.unpack_from( "HHhhhhhh", buf ) # big indian
   if verbose:
     print raw
   return raw
   
 def writeRobotCmd( com, verbose ):
   servoTime = 100 # in ms
-  buf = struct.pack( ">HHHhhh", 0, 0xFFFF, servoTime, STOP_SERVO, STOP_SERVO, STOP_SERVO )
+  buf = struct.pack( "HHHhhh", 0, 0xFFFF, servoTime, STOP_SERVO, STOP_SERVO, 0 )
   com.write( PACKET_START )
   com.write( chr(len(buf)) )
   com.write( buf )
