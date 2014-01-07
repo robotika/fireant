@@ -33,6 +33,7 @@ def readRobotStatus( com ):
   raw = struct.unpack_from( "HHhhhhhh", buf ) # big indian
   if verbose:
     print raw
+    print "TIME\t%d" % raw[0]
   return raw
   
 def writeRobotCmd( com, cmd, servoTime = 100 ):  
@@ -68,8 +69,9 @@ def pos2cmd( xyz ):
   return [10*x for x in [c[0]+a[0], c[1]-a[1], c[2]+a[2]]]
 
 def play( com, music ):
-  numMove = 2
-  numTone = 5
+  scale = 4 # 4x faster communication (should be in time TODO)
+  numMove = 2*scale
+  numTone = 5*scale
   xDist = 0.18
   zUp, zDown = -0.01, -0.083 # added extra 2cm (was -0.063)
   yStep = 0.026 # real measure = 0.0228
@@ -114,12 +116,12 @@ def main( filename=None ):
     com = ReplyLog( filename )
     verbose = True
   else:
-    com = LogIt( serial.Serial( 'COM8',9600 ) )
+    com = LogIt( serial.Serial( 'COM8',38400 ) )
     verbose = False
 #  ver0( com )
-#  play( com, "E1E1E2" )
+  play( com, "E1E1E2" )
 #  play( com, "E1E1E2E1E1E2E1G1C2D1E2F1F1F1F1F1E1E2E1D1D1E1D2" ) # Jingle Bells
-  testKey( com )
+#  testKey( com )
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:

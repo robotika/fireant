@@ -42,7 +42,7 @@ struct RobotCmd
 void updateRobotStatus()
 {
   int i;
-  robotStatus.time = micros();
+  robotStatus.time = micros()/1000; // ms instead of us ... even that loooks bit strange
   robotStatus.voltage = Orion.queryVoltage();
   for( i = 0; i < NUM_SERVOS; i++ )
   {
@@ -126,7 +126,7 @@ void executeRobotCmd()
 
 void setup()
 {
-  Serial.begin( 9600 );
+  Serial.begin( 38400 );
   Serial.print( "ForceServo test ...\n" );
 
   Orion.begin(); 
