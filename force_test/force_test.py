@@ -17,6 +17,8 @@ sys.path.append( ".."+os.sep+"serial_servo")
 from serial_servo import LogIt, ReplyLog
 from serial_servo import pos2angles
 
+SERIAL_BAUD = 38400
+
 PACKET_START = chr(0xAB)
 ECHO_CHAR = 'D'
 STOP_SERVO = -32768 # 0x8000
@@ -116,7 +118,10 @@ def main( filename=None ):
     com = ReplyLog( filename )
     verbose = True
   else:
-    com = LogIt( serial.Serial( 'COM8',38400 ) )
+    if sys.platform == 'linux2':
+      com = LogIt( serial.Serial( '/dev/ttyUSB0', SERIAL_BAUD ) )
+    else:
+      com = LogIt( serial.Serial( 'COM8', SERIAL_BAUD ) )
     verbose = False
 #  ver0( com )
   play( com, "E1E1E2" )
