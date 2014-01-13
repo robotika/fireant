@@ -42,7 +42,7 @@ struct RobotCmd
 void updateRobotStatus()
 {
   int i;
-  robotStatus.time = micros()/1000; // ms instead of us ... even that loooks bit strange
+  robotStatus.time = millis();
   robotStatus.voltage = Orion.queryVoltage();
   for( i = 0; i < NUM_SERVOS; i++ )
   {
