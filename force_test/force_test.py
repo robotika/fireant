@@ -24,6 +24,7 @@ ECHO_CHAR = 'D'
 STOP_SERVO = -32768 # 0x8000
 
 verbose = False
+g_time = 0
 
 def readRobotStatus( com ):
   while com.read(1) != PACKET_START:
@@ -36,10 +37,16 @@ def readRobotStatus( com ):
   if verbose:
     print raw
     print "TIME\t%d" % raw[0]
+  global g_time
+  g_time = raw[0]
   return raw
   
-def writeRobotCmd( com, cmd, servoTime = 100 ):  
-  buf = struct.pack( "HHHhhh", 0, 0xFFFF, servoTime, *cmd )
+def writeRobotCmd( com, cmd, servoTime = 100 ):
+  global g_time
+  g_time += servoTime
+  if verbose:
+    print "SEND", g_time
+  buf = struct.pack( "HHHhhh", g_time, 0xFFFF, servoTime, *cmd )
   com.write( PACKET_START )
   com.write( chr(len(buf)) )
   com.write( buf )

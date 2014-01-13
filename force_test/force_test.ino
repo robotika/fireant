@@ -47,7 +47,7 @@ void updateRobotStatus()
   for( i = 0; i < NUM_SERVOS; i++ )
   {
     robotStatus.servo[i].position = Orion.queryFBAngle( servoPins[i] );    
-    robotStatus.servo[i].force = Orion.queryForce( servoPins[i] );
+    robotStatus.servo[i].force = 0; //temporarily disabled to speed-up the loop ... Orion.queryForce( servoPins[i] );
   }
 }
 
@@ -122,6 +122,16 @@ void executeRobotCmd()
   Orion.execute();
 }
 
+void waitUntil( uint16_t executeAt )
+{
+  // busy waiting - maybe add some usleep??
+  uint16_t time = millis();
+  while( int16_t(executeAt - time) > 0 )
+  {
+    time = millis();
+  }
+}
+
 //----------------------------------------------------
 
 void setup()
@@ -147,6 +157,7 @@ void loop()
       Orion.stopPulse( servoPins[i] ); // it is by default, but this way it is more clear
     return; //Battery too low to do anything.
   }
+  waitUntil( robotCmd.executeAt );
   executeRobotCmd();
 }
 
