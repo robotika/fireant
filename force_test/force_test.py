@@ -117,6 +117,28 @@ def ver0( com ):
   readRobotStatus( com )
   writeRobotCmd( com, cmd=[STOP_SERVO, STOP_SERVO, STOP_SERVO] )
 
+def record( com, filename, loopLen ):
+  print "RECORDING", filename
+  f = open( filename, "w" )
+  for i in xrange( loopLen ):
+    status = readRobotStatus( com )
+    f.write( str(status) + '\n' )
+    writeRobotCmd( com, cmd=[STOP_SERVO, STOP_SERVO, STOP_SERVO] )
+  f.close()
+  print "END"
+
+
+def replay( com, filename ):
+  print "REPLAY", filename
+  for line in open( filename ):
+    readRobotStatus( com )
+    oldStatus = eval(line)
+    cmd = oldStatus[2::2]
+    print cmd
+    writeRobotCmd( com, cmd=cmd )
+  writeRobotCmd( com, cmd=[STOP_SERVO, STOP_SERVO, STOP_SERVO] )
+  print "END"
+
 
 def main( filename=None ):
   global verbose
@@ -131,9 +153,12 @@ def main( filename=None ):
       com = LogIt( serial.Serial( 'COM8', SERIAL_BAUD ) )
     verbose = False
 #  ver0( com )
-  play( com, "E1E1E2" )
+#  play( com, "E1E1E2" )
 #  play( com, "E1E1E2E1E1E2E1G1C2D1E2F1F1F1F1F1E1E2E1D1D1E1D2" ) # Jingle Bells
 #  testKey( com )
+  cmdFile = "record.txt"
+#  record( com, cmdFile, 100 )
+  replay( com, cmdFile )
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:
