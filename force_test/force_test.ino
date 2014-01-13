@@ -6,11 +6,17 @@
 #include <Orion.h>
 #include <SPI.h>
 
+#define LFC 21
+#define LFF 22 
+#define LFT 23
 #define LMC 20
 #define LMF 19
-#define LMT 18 
+#define LMT 18
+#define LRC 17
+#define LRF 16
+#define LRT 0 
 
-const unsigned char servoPins[] = { LMC, LMF, LMT };
+const unsigned char servoPins[] = { LFC, LFF, LFT,   LMC, LMF, LMT,   LRC, LRF, LRT   };
 const unsigned int NUM_SERVOS = sizeof(servoPins)/sizeof(unsigned char);
 
 const uint8_t ECHO_CHAR = 'D'; // in memory of Daisy robot

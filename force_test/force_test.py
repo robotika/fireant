@@ -17,6 +17,8 @@ sys.path.append( ".."+os.sep+"serial_servo")
 from serial_servo import LogIt, ReplyLog
 from serial_servo import pos2angles
 
+NUM_SERVOS = 9
+
 SERIAL_BAUD = 38400
 
 PACKET_START = chr(0xAB)
@@ -33,7 +35,8 @@ def readRobotStatus( com ):
   chSum = size;
   buf = com.read( size + 1 ) # read data + checksum
   assert (size+sum([ord(x) for x in buf])) % 256 == 0, [hex(ord(x)) for x in buf]
-  raw = struct.unpack_from( "HHhhhhhh", buf ) # big indian
+  assert size-4 == 4*NUM_SERVOS, (size, NUM_SERVOS)
+  raw = struct.unpack_from( "HH"+"hh"*NUM_SERVOS, buf ) # big indian
   if verbose:
     print raw
     print "TIME\t%d" % raw[0]
@@ -46,7 +49,7 @@ def writeRobotCmd( com, cmd, servoTime = 100 ):
   g_time += servoTime
   if verbose:
     print "SEND", g_time
-  buf = struct.pack( "HHHhhh", g_time, 0xFFFF, servoTime, *cmd )
+  buf = struct.pack( "HHH"+"h"*NUM_SERVOS, g_time, 0xFFFF, servoTime, *cmd )
   com.write( PACKET_START )
   com.write( chr(len(buf)) )
   com.write( buf )
@@ -123,7 +126,7 @@ def record( com, filename, loopLen ):
   for i in xrange( loopLen ):
     status = readRobotStatus( com )
     f.write( str(status) + '\n' )
-    writeRobotCmd( com, cmd=[STOP_SERVO, STOP_SERVO, STOP_SERVO] )
+    writeRobotCmd( com, cmd=[STOP_SERVO]*NUM_SERVOS )
   f.close()
   print "END"
 
@@ -136,7 +139,7 @@ def replay( com, filename ):
     cmd = oldStatus[2::2]
     print cmd
     writeRobotCmd( com, cmd=cmd )
-  writeRobotCmd( com, cmd=[STOP_SERVO, STOP_SERVO, STOP_SERVO] )
+  writeRobotCmd( com, cmd=[STOP_SERVO]*NUM_SERVOS )
   print "END"
 
 
