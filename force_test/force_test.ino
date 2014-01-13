@@ -16,7 +16,18 @@
 #define LRF 16
 #define LRT 0 
 
-const unsigned char servoPins[] = { LFC, LFF, LFT,   LMC, LMF, LMT,   LRC, LRF, LRT   };
+#define RFC 13
+#define RFF 14
+#define RFT 15
+#define RMC 12
+#define RMF 11
+#define RMT 10
+#define RRC 9
+#define RRF 8
+#define RRT 1 
+
+const unsigned char servoPins[] = { LFC, LFF, LFT,   LMC, LMF, LMT,   LRC, LRF, LRT, 
+                                    RFC, RFF, RFT,   RMC, RMF, RMT,   RRC, RRF, RRT };
 const unsigned int NUM_SERVOS = sizeof(servoPins)/sizeof(unsigned char);
 
 const uint8_t ECHO_CHAR = 'D'; // in memory of Daisy robot
