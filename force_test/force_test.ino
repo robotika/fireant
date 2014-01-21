@@ -6,9 +6,9 @@
 #include <Orion.h>
 #include <SPI.h>
 
-#define LFC 21
+#define LFC 23
 #define LFF 22 
-#define LFT 23
+#define LFT 21
 #define LMC 20
 #define LMF 19
 #define LMT 18
@@ -16,9 +16,9 @@
 #define LRF 16
 #define LRT 0 
 
-#define RFC 13
+#define RFC 15
 #define RFF 14
-#define RFT 15
+#define RFT 13
 #define RMC 12
 #define RMF 11
 #define RMT 10
