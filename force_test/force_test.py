@@ -17,7 +17,7 @@ sys.path.append( ".."+os.sep+"serial_servo")
 from serial_servo import LogIt, ReplyLog
 from serial_servo import pos2angles
 
-NUM_SERVOS = 18
+NUM_SERVOS = 23
 
 SERIAL_BAUD = 38400
 

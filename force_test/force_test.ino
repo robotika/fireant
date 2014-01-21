@@ -26,8 +26,15 @@
 #define RRF 8
 #define RRT 1 
 
+#define HeadRollPin 7
+#define HeadYawPin 6
+#define HeadPitchPin 5
+#define PincerLPin 4
+#define PincerRPin 3 
+
 const unsigned char servoPins[] = { LFC, LFF, LFT,   LMC, LMF, LMT,   LRC, LRF, LRT, 
-                                    RFC, RFF, RFT,   RMC, RMF, RMT,   RRC, RRF, RRT };
+                                    RFC, RFF, RFT,   RMC, RMF, RMT,   RRC, RRF, RRT,
+                                    HeadRollPin, HeadYawPin, HeadPitchPin, PincerLPin, PincerRPin };
 const unsigned int NUM_SERVOS = sizeof(servoPins)/sizeof(unsigned char);
 
 const uint8_t ECHO_CHAR = 'D'; // in memory of Daisy robot
