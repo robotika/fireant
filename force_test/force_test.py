@@ -124,6 +124,8 @@ def record( com, filename, loopLen ):
   print "RECORDING", filename
   f = open( filename, "w" )
   for i in xrange( loopLen ):
+    if i % 10 == 0:
+      print i/10,
     status = readRobotStatus( com )
     f.write( str(status) + '\n' )
     writeRobotCmd( com, cmd=[STOP_SERVO]*NUM_SERVOS )
@@ -143,6 +145,33 @@ def replay( com, filename ):
   print "END"
 
 
+def moveServoByServo( com ):
+  print "MOVE SERVO"
+  offsetJosephine = (5160, 800, -498, 0, 12, 0, 912, 0, -107, 0, 259, 0, 586, 0, -35, 0, 272, 0, 457, 0, -71, 0, -155, 0, -644, 0, -466, 0, -186, 0, -670, 0, -594, 0, -166, 0, -719, 0, -51, 0, -199, 0, -337, 0, -327, 0, 207, 0)
+  offset = (1708, 806, -82, 0, -96, 0, 239, 0, -44, 0, -600, 0, -211, 0, -47, 0, -561, 0, -95, 0, -99, 0, 128, 0, -305, 0, -55, 0, 320, 0, -310, 0, 247, 0, 19, 0, -300, 0, -1685, 0, -1685, 0, -1685, 0, -1685, 0, -1685, 0)
+  cmdOffset = offsetJosephine[2::2]
+  cmdStop = [STOP_SERVO]*NUM_SERVOS
+  prevTime = None
+  for selectedServo in xrange(NUM_SERVOS):
+    print "SERVO", selectedServo
+    if selectedServo in []: #range(2,NUM_SERVOS,2):
+      print "SKIPPING", selectedServo
+      continue
+    for i in xrange(10):
+      print i,
+      status = readRobotStatus( com )
+      time = status[0]
+      if prevTime > time:
+        print "RESET", prevTime, time
+      prevTime = time
+      cmd = cmdStop[:]
+      cmd[selectedServo] = cmdOffset[selectedServo]
+      writeRobotCmd( com, cmd=cmd )
+    print "END"
+  status = readRobotStatus( com ) # this was missing
+  writeRobotCmd( com, cmd=[STOP_SERVO]*NUM_SERVOS )
+  print "END."
+
 def main( filename=None ):
   global verbose
 
@@ -153,15 +182,16 @@ def main( filename=None ):
     if sys.platform == 'linux2':
       com = LogIt( serial.Serial( '/dev/ttyUSB0', SERIAL_BAUD ) )
     else:
-      com = LogIt( serial.Serial( 'COM8', SERIAL_BAUD ) )
+      com = LogIt( serial.Serial( 'COM9', SERIAL_BAUD ) )
     verbose = False
 #  ver0( com )
 #  play( com, "E1E1E2" )
 #  play( com, "E1E1E2E1E1E2E1G1C2D1E2F1F1F1F1F1E1E2E1D1D1E1D2" ) # Jingle Bells
 #  testKey( com )
-  cmdFile = "record.txt"
+#  cmdFile = "record.txt"
 #  record( com, cmdFile, 100 )
-  replay( com, cmdFile )
+#  replay( com, cmdFile )
+  moveServoByServo( com )
 
 if __name__ == "__main__":
   if len(sys.argv) > 1:
