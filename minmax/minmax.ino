@@ -26,5 +26,6 @@ void loop()
   Orion.setTime( 100 ); 
   Orion.setAngle( SERVO_PIN, 0 );
   Orion.execute(); 
+  delay(10); 
 }
 
