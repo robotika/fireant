@@ -30,7 +30,13 @@ void setServo( int servoPin, int servoMin, int servoMax, int servoOffset, int se
   if( Orion.queryServoMax( servoPin ) != servoMax )
     warning( NOTE_D6, 5 ); 
   if( Orion.queryAOffset( servoPin ) != servoOffset )
+  {
     warning( NOTE_E6, 7 );
+    Serial.print( servoOffset );
+    Serial.print("\n");
+    Serial.print( Orion.queryAOffset( servoPin ) );
+    Serial.print("\n");
+  }
 }
 
 void setup()
@@ -38,6 +44,8 @@ void setup()
   Orion.begin(); 
   Orion.tone(NOTE_C6,100); 
   Orion.tone(NOTE_E6,100); 
+  Serial.begin(9600);
+  Serial.print("minmax test\n");
   delay(100); 
   setServo( SERVO_PIN, -2000, 2000, 100, 0 );
   delay(100); 
