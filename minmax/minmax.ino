@@ -7,6 +7,31 @@
 
 #define SERVO_PIN 21 
 
+void warning( int tone=NOTE_C6, int num=10 )
+{
+  int i;
+  for( i = 0; i < num; i++ )
+  {
+    Orion.red( true );
+    Orion.tone( tone,100 ); 
+    Orion.red( false );
+    delay(100); 
+  }
+}
+
+void setServo( int servoPin, int servoMin, int servoMax, int servoOffset, int servoDir )
+{
+  Orion.setServoMin( servoPin, servoMin );
+  Orion.setServoMax( servoPin, servoMax );
+  Orion.setAOffset( servoPin, servoDir );
+  Orion.setServoDir( servoPin, servoOffset );
+  if( Orion.queryServoMin( servoPin ) != servoMin )
+    warning( NOTE_C6, 3 );
+  if( Orion.queryServoMax( servoPin ) != servoMax )
+    warning( NOTE_D6, 5 ); 
+  if( Orion.queryAOffset( servoPin ) != servoOffset )
+    warning( NOTE_E6, 7 );
+}
 
 void setup()
 {
@@ -14,10 +39,7 @@ void setup()
   Orion.tone(NOTE_C6,100); 
   Orion.tone(NOTE_E6,100); 
   delay(100); 
-  Orion.setServoMin( SERVO_PIN, -2000 );
-  Orion.setServoMax( SERVO_PIN, 2000 );
-  Orion.setServoDir( SERVO_PIN, 0);
-  Orion.setAOffset( SERVO_PIN, 100 );
+  setServo( SERVO_PIN, -2000, 2000, 100, 0 );
   delay(100); 
 }
 
