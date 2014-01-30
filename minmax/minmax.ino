@@ -39,7 +39,8 @@ void setup()
   Orion.tone(NOTE_C6,100); 
   Orion.tone(NOTE_E6,100); 
   delay(100); 
-  setServo( SERVO_PIN, -2000, 2000, 100, 1 );
+//  setServo( SERVO_PIN, -2000, 2000, 0, 0 );
+  setServo( SERVO_PIN, 0, 0, -500, 1 );
   delay(100); 
 }
 
@@ -51,7 +52,7 @@ void loop()
     return;
   } 
   Orion.setTime( 100 ); 
-  Orion.setAngle( SERVO_PIN, 200 );
+  Orion.setAngle( SERVO_PIN, 400 );
   Orion.execute(); 
   delay(10); 
 }
