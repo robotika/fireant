@@ -49,11 +49,20 @@ def writeRobotCmd( com, cmd, servoTime = 100 ):
   g_time += servoTime
   if verbose:
     print "SEND", g_time
-  buf = struct.pack( "HHH"+"h"*NUM_SERVOS, g_time, 0xFFFF, servoTime, *cmd )
+  buf = struct.pack( "HHH"+"h"*NUM_SERVOS, g_time & 0xFFFF, 0xFFFF, servoTime, *cmd )
   com.write( PACKET_START )
   com.write( chr(len(buf)) )
   com.write( buf )
   com.write( chr( (-sum([ord(x) for x in buf])-len(buf)) % 256 ) )
+
+
+def updateRobot( com, cmd ):
+  "wrapper for read-write pair"
+  status = readRobotStatus( com )
+  writeRobotCmd( com, cmd )
+  return status
+
+
 
 #-----------------------------------------------------
 # copy of piano playing stuff
@@ -152,6 +161,14 @@ def moveServoByServo( com ):
   cmdOffset = offsetJosephine[2::2]
   cmdStop = [STOP_SERVO]*NUM_SERVOS
   prevTime = None
+ 
+  # stabilize servo reading 
+  print "INIT",
+  for i in xrange(5):
+    print i,
+    updateRobot( com, cmd=[STOP_SERVO]*NUM_SERVOS )
+  print "DONE."
+
   for selectedServo in xrange(NUM_SERVOS):
     print "SERVO", selectedServo
     if selectedServo in []: #range(2,NUM_SERVOS,2):
