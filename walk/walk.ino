@@ -46,7 +46,8 @@
 #define MAXBODYROLL 300
 #define MAXBODYPITCH 300
 
-const int BUTTON_PIN = 2; 
+const int BUTTON_START_PIN = 2; 
+const int BUTTON_STOP_PIN = 4; 
 
 const unsigned char servoPins[] = { LFC, LFF, LFT,   LMC, LMF, LMT,   LRC, LRF, LRT, 
                                     RFC, RFF, RFT,   RMC, RMF, RMT,   RRC, RRF, RRT,
@@ -103,7 +104,7 @@ void InitState()
   Zdist=0;
   Rdist=0;
   BodyOffsetX=0;
-  BodyOffsetY=0;
+  BodyOffsetY = MAXY/2;// was 0;
   BodyOffsetZ=0;
   BodyRotOffsetZ=0;
   BodyYaw=0;
@@ -131,10 +132,10 @@ void setup()
   Orion.begin();
   Orion.green( heartbeat );
   Orion.red(false); 
-  Orion.tone(NOTE_C6,100);  
-  Orion.tone(NOTE_D6,100);  
-  Orion.tone(NOTE_E6,100);  
-  Orion.tone(NOTE_F6,100);  
+  Orion.tone(NOTE_C4,100);  
+  Orion.tone(NOTE_D4,100);  
+  Orion.tone(NOTE_E4,100);  
+  Orion.tone(NOTE_F4,100);  
 
   StopServos();
 
@@ -144,8 +145,9 @@ void setup()
 
   InitState(); 
   
-  Orion.tone(NOTE_G5,200); 
-  Orion.tone(NOTE_G5,200); 
+  Orion.tone(NOTE_G4,200); 
+  delay(50);
+  Orion.tone(NOTE_G4,200); 
 }
 
 void loop()
@@ -158,10 +160,22 @@ void loop()
   
   if( !walking )
   {
-    if( digitalRead( BUTTON_PIN ) == LOW )
+    if( digitalRead( BUTTON_START_PIN ) == LOW )
       walking = true;
     return;
   }
+  else
+  {
+    if( digitalRead( BUTTON_STOP_PIN ) == LOW )
+    {
+      walking = false;
+      StopServos();
+      return;
+    }
+  }
+
+  // move forward at given hegiht
+  Xdist = MAXX/4;
   
   //Heart beat LED
   long time = millis() - lastbeat;
@@ -176,9 +190,9 @@ void loop()
   Orion.execGait(BodyYaw,
                  BodyRoll,
                  BodyPitch,
-                 BodyOffsetX,
-                 BodyOffsetY,
-                 0, //hack DefBodyRotOffset[RotateMode],
+                 0, //BodyOffsetX,
+                 0, //BodyOffsetY,
+                 0, //DefBodyRotOffset[RotateMode],
                  BodyOffsetX,
                  BodyOffsetY,
                  BodyOffsetZ,
