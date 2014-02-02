@@ -104,7 +104,7 @@ void InitState()
   Zdist=0;
   Rdist=0;
   BodyOffsetX=0;
-  BodyOffsetY = MAXY/2;// was 0;
+  BodyOffsetY=0;
   BodyOffsetZ=0;
   BodyRotOffsetZ=0;
   BodyYaw=0;
@@ -161,7 +161,10 @@ void loop()
   if( !walking )
   {
     if( digitalRead( BUTTON_START_PIN ) == LOW )
+    {
       walking = true;
+      InitState();
+    }
     return;
   }
   else
@@ -175,7 +178,13 @@ void loop()
   }
 
   // move forward at given hegiht
-  Xdist = MAXX/4;
+  Xdist = MAXX/2;
+  if( BodyOffsetY < MAXY/2 )
+  {
+    BodyOffsetY += MAXY/100;
+    Xdist = 0; // do not walk, if you are not standing yet
+  }
+ 
   
   //Heart beat LED
   long time = millis() - lastbeat;
