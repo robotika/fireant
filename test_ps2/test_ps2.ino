@@ -2,7 +2,7 @@
 #include <BMSerial.h>
 #include <BMPS2X.h>
 
-BMPS2 ps2x(6,100);
+BMPS2 ps2x(6,30);
 
 void setup()
 {
