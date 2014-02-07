@@ -2,7 +2,7 @@
 #include <BMSerial.h>
 #include <BMPS2X.h>
 
-BMPS2 ps2x(6,30);
+BMPS2 ps2x(6,100);
 
 void setup()
 {
@@ -16,7 +16,9 @@ void setup()
 
 void loop()
 {
-  // Get the new PS2 state. - Wait for a PS2 cycle time?
-  ps2x.read_ps2(true);
+  if (ps2x.read_ps2(true))
+    Serial.print(".");
+  else 
+    Serial.print("E");
 }
 
