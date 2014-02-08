@@ -178,7 +178,9 @@ void setup()
   Orion.begin(); 
   Orion.tone(NOTE_C6,100); 
   Orion.tone(NOTE_D6,100); 
-  Orion.tone(NOTE_C6,100); 
+  Orion.tone(NOTE_C6,100);
+//  resetCalibration();
+//  Orion.resetRegs();
 }
 
 void loop()
