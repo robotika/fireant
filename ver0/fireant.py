@@ -85,7 +85,7 @@ class FireAnt:
     self.update( cmd=[STOP_SERVO]*NUM_SERVOS )
 
 
-  def goto( self, legXYZ ):
+  def setLegsXYZ( self, legXYZ ):
     "move legs to their relative XYZ coordinates"
     assert len(legXYZ) == 6, legXYZ
     servoDirs = (1,-1,1, 1,-1,1, 1,-1,1, -1,1,-1, -1,1,-1, -1,1,-1, 1,1,1,1,1 )
@@ -94,10 +94,23 @@ class FireAnt:
       angles.extend( pos2angles10thDeg( xyz, abc=(0.0525, 0.0802, 0.1283) ) )
     angles += [0,0,0,0,0] # Head & Pincers
     cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
-    print cmd
-    for i in xrange(10):
+    for i in xrange(2):
       self.update( cmd )
 
+  def standUp( self ):
+    "prepare robot to walking height"
+    for z in [-0.01*i for i in xrange(12)]:
+      self.setLegsXYZ( [(0.15, 0.0, z)]*6 )
+
+  def sitDown( self ):
+    for z in [-0.01*i for i in xrange(11,0,-1)]:
+      self.setLegsXYZ( [(0.15, 0.0, z)]*6 )
+
+  def wait( self, duration ):
+    cmd = self.servoPosRaw[:]
+    startTime = self.time
+    while self.time < startTime+duration:
+      self.update( cmd )
 
 if __name__ == "__main__":
   if len(sys.argv) < 2:
@@ -120,6 +133,10 @@ if __name__ == "__main__":
     verbose = False
 
   robot = FireAnt( robotName, com )
-  robot.goto( [(0.16, 0.0, 0.00)]*6 )
+  print "Battery BEFORE", robot.power
+  robot.standUp()
+  robot.wait(5.0)
+  robot.sitDown()
   robot.stopServos()
+  print "Batter AFTER", robot.power
 
