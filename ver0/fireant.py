@@ -38,6 +38,7 @@ class FireAnt:
     self.tickTime = 0
     self.servoPosRaw = None
     self.power = None
+    self.lastCmd = None
     self.init()
 
   def readStatus( self ):
@@ -68,6 +69,7 @@ class FireAnt:
     self.com.write( chr(len(buf)) )
     self.com.write( buf )
     self.com.write( chr( (-sum([ord(x) for x in buf])-len(buf)) % 256 ) )
+    self.lastCmd = cmd[:]
 
   def update( self, cmd ):
     "wrapper for read-write pair"
@@ -85,7 +87,7 @@ class FireAnt:
     self.update( cmd=[STOP_SERVO]*NUM_SERVOS )
 
 
-  def setLegsXYZ( self, legXYZ ):
+  def setLegsXYZ( self, legXYZ, num=2 ):
     "move legs to their relative XYZ coordinates"
     assert len(legXYZ) == 6, legXYZ
     servoDirs = (1,-1,1, 1,-1,1, 1,-1,1, -1,1,-1, -1,1,-1, -1,1,-1, 1,1,1,1,1 )
@@ -94,8 +96,12 @@ class FireAnt:
       angles.extend( pos2angles10thDeg( xyz, abc=(0.0525, 0.0802, 0.1283) ) )
     angles += [0,0,0,0,0] # Head & Pincers
     cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
-    for i in xrange(4):
-      self.update( cmd )
+    if STOP_SERVO in self.lastCmd:
+      prev = cmd[:]
+    else:
+      prev = self.lastCmd
+    for i in xrange(num):
+      self.update( [((i+1)*new+(num-1-i)*old)/num for old, new in zip(prev,cmd)] )
 
   def stable( self, coords, size=0.08 ):
     "add extra Y coordinate to front/back legs"
