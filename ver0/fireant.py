@@ -94,23 +94,40 @@ class FireAnt:
       angles.extend( pos2angles10thDeg( xyz, abc=(0.0525, 0.0802, 0.1283) ) )
     angles += [0,0,0,0,0] # Head & Pincers
     cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
-    for i in xrange(2):
+    for i in xrange(4):
       self.update( cmd )
+
+  def stable( self, coords, size=0.08 ):
+    "add extra Y coordinate to front/back legs"
+    assert len(coords) == 6, coords
+    return [(x,y+s,z) for (x,y,z),s in zip( coords, [size,0,-size, size,0,-size] ) ] 
 
   def standUp( self ):
     "prepare robot to walking height"
     for z in [-0.01*i for i in xrange(12)]:
-      self.setLegsXYZ( [(0.15, 0.0, z)]*6 )
+      self.setLegsXYZ( self.stable([(0.15, 0.0, z)]*6) )
 
   def sitDown( self ):
     for z in [-0.01*i for i in xrange(11,0,-1)]:
-      self.setLegsXYZ( [(0.15, 0.0, z)]*6 )
+      self.setLegsXYZ( self.stable([(0.15, 0.0, z)]*6) )
 
   def wait( self, duration ):
     cmd = self.servoPosRaw[:]
     startTime = self.time
     while self.time < startTime+duration:
       self.update( cmd )
+
+  def walk( self, dist ):
+    up,down = -0.09, -0.11
+    step = 0.05
+    width = 0.12
+    while dist > 0:
+      self.setLegsXYZ( self.stable( [(width, 0, up), (width, step, down)]*3) )
+      self.setLegsXYZ( self.stable([(width, step, up), (width, 0, down)]*3) )
+      self.setLegsXYZ( self.stable([(width, step, down), (width, 0, up)]*3) )
+      self.setLegsXYZ( self.stable([(width, 0, down), (width, step, up)]*3) )
+      dist -= 2*step
+
 
 if __name__ == "__main__":
   if len(sys.argv) < 2:
@@ -124,7 +141,7 @@ if __name__ == "__main__":
 
   if filename:
     com = ReplyLog( filename )
-    verbose = True
+    verbose = False #True
   else:
     if sys.platform == 'linux2':
       com = LogIt( serial.Serial( '/dev/ttyUSB0', SERIAL_BAUD ) )
@@ -135,7 +152,7 @@ if __name__ == "__main__":
   robot = FireAnt( robotName, com )
   print "Battery BEFORE", robot.power
   robot.standUp()
-  robot.wait(5.0)
+  robot.walk(1.0)
   robot.sitDown()
   robot.stopServos()
   print "Batter AFTER", robot.power
