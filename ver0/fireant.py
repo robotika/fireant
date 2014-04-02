@@ -25,8 +25,8 @@ STOP_SERVO = -32768 # 0x8000
 
 calibration = {
     'Uno': [0]*NUM_SERVOS,
-    'Due': (-121, 451, 420,  -68, 59, 497,  -77, 1, 526,  -139, -500, -602,  -76, -232, -950,  215, -662, -644, 
-          -178, -134, -314, -258, 17),
+    'Due': -81, 447, 420, -35, 471, 487, -39, -32, 531, -119, -449, -580, -37, -228, -935, 247, -659, -654,
+          -174, -130, -285, -266, 7),
     }
 
 class FireAnt:
@@ -161,5 +161,5 @@ if __name__ == "__main__":
   robot.walk(1.0)
   robot.sitDown()
   robot.stopServos()
-  print "Batter AFTER", robot.power
+  print "Battery AFTER", robot.power
 
