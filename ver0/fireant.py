@@ -1,7 +1,7 @@
 """
   FireAnt control via USB cable
   usage:
-         ./fireant.py <Uno|Due> [<input logfile>]
+         ./fireant.py <Uno|Due> [calibrate|walk] [<input logfile> [F]]
 """
 import sys
 import os
@@ -12,7 +12,7 @@ import math
 import struct
 
 sys.path.append( ".."+os.sep+"serial_servo") 
-from serial_servo import LogIt, ReplyLog
+from serial_servo import LogIt, ReplayLog
 from triangle import pos2angles10thDeg
 
 verbose = False
@@ -134,19 +134,39 @@ class FireAnt:
       self.setLegsXYZ( self.stable([(width, 0, down), (width, step, up)]*3) )
       dist -= 2*step
 
+  def calibrate( self, duration=3.0 ):
+    "verify servos center point calibration"
+    cmd=[STOP_SERVO]*NUM_SERVOS
+    startTime = self.time
+    stat = []
+    while self.time < startTime+duration:
+      stat.append( self.update( cmd ) )
+    newCalib = []
+    for i in xrange(len(stat[0])):
+      arr = [a[i] for a in stat]
+      median = sorted(arr)[len(arr)/2]
+      print "%d:\t%d\t%d\t%d\t%d" % (i-1, min(arr), max(arr), max(arr)-min(arr), median)
+      newCalib.append( median )
+    print tuple(newCalib[2:]) # first two readings are time and battery status
+
 
 if __name__ == "__main__":
-  if len(sys.argv) < 2:
+  if len(sys.argv) < 3 or sys.argv[2] not in ["calibrate", "walk"]:
     print __doc__
     sys.exit(-1)
   robotName = sys.argv[1]
   filename = None
-  if len(sys.argv) > 2:
-    filename = sys.argv[2]
+  task = sys.argv[2]
+  if len(sys.argv) > 3:
+    replayAssert = True
+    filename = sys.argv[3]
+    if len(sys.argv) > 4:
+      assert sys.argv[4] == 'F'
+      replayAssert = False
   assert robotName in ['Uno', 'Due'], robotName
 
   if filename:
-    com = ReplyLog( filename )
+    com = ReplayLog( filename, assertWrite=replayAssert )
     verbose = False #True
   else:
     if sys.platform == 'linux2':
@@ -157,9 +177,14 @@ if __name__ == "__main__":
 
   robot = FireAnt( robotName, com )
   print "Battery BEFORE", robot.power
-  robot.standUp()
-  robot.walk(1.0)
-  robot.sitDown()
-  robot.stopServos()
+  if task == "calibrate":
+    robot.calibrate()
+  elif task == "walk":
+    robot.standUp()
+    robot.walk(1.0)
+    robot.sitDown()
+    robot.stopServos()
+  else:
+    print "UNKNOWN TASK", task
   print "Battery AFTER", robot.power
 

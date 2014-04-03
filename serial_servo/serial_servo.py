@@ -44,10 +44,10 @@ class LogIt():
 
 #-------------------------------------------------------------------
 
-class ReplyLog():
+class ReplayLog():
   "Read & verify log"
   def __init__( self, filename, assertWrite=True ):
-    print "ReplyLog", filename
+    print "ReplayLog", filename
     self._logFile = open( filename, "rb" )
     self.assertWrite = assertWrite
 
@@ -178,7 +178,7 @@ def play( com, music, verbose ):
 
 def main( filename=None ):
   if filename:
-    com = ReplyLog( filename )
+    com = ReplayLog( filename )
     verbose = True
   else:
     com = LogIt( serial.Serial( 'COM8',9600 ) )
