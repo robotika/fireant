@@ -103,19 +103,14 @@ class FireAnt:
     for i in xrange(num):
       self.update( [((i+1)*new+(num-1-i)*old)/num for old, new in zip(prev,cmd)] )
 
-  def stable( self, coords, size=0.08 ):
-    "add extra Y coordinate to front/back legs"
-    assert len(coords) == 6, coords
-    return [(x,y+s,z) for (x,y,z),s in zip( coords, [size,0,-size, size,0,-size] ) ] 
-
   def standUp( self ):
     "prepare robot to walking height"
     for z in [-0.01*i for i in xrange(12)]:
-      self.setLegsXYZ( self.stable([(0.15, 0.0, z)]*6) )
+      self.setLegsXYZ( [(0.1083, 0.0625, z),(0.125, 0.0, z),(0.1083, -0.0625, z)]*2 )
 
   def sitDown( self ):
     for z in [-0.01*i for i in xrange(11,0,-1)]:
-      self.setLegsXYZ( self.stable([(0.15, 0.0, z)]*6) )
+      self.setLegsXYZ( [(0.1083, 0.0625, z),(0.125, 0.0, z),(0.1083, -0.0625, z)]*2 )
 
   def wait( self, duration ):
     cmd = self.servoPosRaw[:]
@@ -125,14 +120,17 @@ class FireAnt:
 
   def walk( self, dist ):
     up,down = -0.09, -0.11
-    step = 0.05
-    width = 0.12
+    s = 0.02 # step
     while dist > 0:
-      self.setLegsXYZ( self.stable( [(width, 0, up), (width, step, down)]*3) )
-      self.setLegsXYZ( self.stable([(width, step, up), (width, 0, down)]*3) )
-      self.setLegsXYZ( self.stable([(width, step, down), (width, 0, up)]*3) )
-      self.setLegsXYZ( self.stable([(width, 0, down), (width, step, up)]*3) )
-      dist -= 2*step
+      self.setLegsXYZ( [(0.1083, 0.0625-s, down),(0.125, 0.0+s, up),(0.1083, -0.0625-s, down),
+                        (0.1083, 0.0625+s, up),(0.125, 0.0-s, down),(0.1083, -0.0625+s, up)] )
+      self.setLegsXYZ( [(0.1083, 0.0625-s, down),(0.125, 0.0+s, down),(0.1083, -0.0625-s, down),
+                        (0.1083, 0.0625+s, down),(0.125, 0.0-s, down),(0.1083, -0.0625+s, down)] )
+      self.setLegsXYZ( [(0.1083, 0.0625+s, up),(0.125, 0.0-s, down),(0.1083, -0.0625+s, up),
+                        (0.1083, 0.0625-s, down),(0.125, 0.0+s, up),(0.1083, -0.0625-s, down)] )
+      self.setLegsXYZ( [(0.1083, 0.0625+s, down),(0.125, 0.0-s, down),(0.1083, -0.0625+s, down),
+                        (0.1083, 0.0625-s, down),(0.125, 0.0+s, down),(0.1083, -0.0625-s, down)] )
+      dist -= 8*s
 
   def calibrate( self, duration=3.0 ):
     "verify servos center point calibration"
@@ -181,7 +179,7 @@ if __name__ == "__main__":
     robot.calibrate()
   elif task == "walk":
     robot.standUp()
-    robot.walk(1.0)
+    robot.walk(0.5)
     robot.sitDown()
     robot.stopServos()
   else:
