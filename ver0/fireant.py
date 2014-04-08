@@ -119,7 +119,7 @@ class FireAnt:
       self.update( cmd )
 
   def walk( self, dist ):
-    up,down = -0.09, -0.11
+    up,down = -0.07, -0.11
     s = 0.02 # step
     while dist > 0:
       self.setLegsXYZ( [(0.1083, 0.0625-s, down),(0.125, 0.0+s, up),(0.1083, -0.0625-s, down),
