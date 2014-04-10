@@ -34,3 +34,14 @@ def pos2angles10thDeg( xyz, abc ):
   a2 = math.atan2( z, d - a )
   return tuple([int(10*math.degrees(angle)) for angle in [a1, a2+tb, tc-math.pi]] )
 
+
+def angles10thDeg2pos( angles, abc ):
+  # X = default leg position, Y to the right?!, Z = up  (!!! TODO revision !!!)
+  angle = [math.radians(a/10.) for a in angles]
+  (a,b,c) = abc
+  d = a + math.cos(angle[1])*b + math.cos(angle[1]+angle[2])*c
+  x = math.cos(angle[0])*d
+  y = math.sin(angle[0])*d
+  z = math.sin(angle[1])*b + math.sin(angle[1]+angle[2])*c
+  return (x,y,z)
+

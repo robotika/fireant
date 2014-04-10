@@ -13,7 +13,7 @@ import struct
 
 sys.path.append( ".."+os.sep+"serial_servo") 
 from serial_servo import LogIt, ReplayLog
-from triangle import pos2angles10thDeg
+from triangle import pos2angles10thDeg, angles10thDeg2pos
 
 verbose = False
 
@@ -75,6 +75,7 @@ class FireAnt:
     "wrapper for read-write pair"
     status = self.readStatus()
     self.writeCmd( cmd )
+    print "%d\t%d\t%d\t%d\t%d\t%d" % (status[2:5] + tuple(cmd[:3]))
     return status
 
   def init( self ):
@@ -90,18 +91,31 @@ class FireAnt:
   def setLegsXYZ( self, legXYZ, num=2 ):
     "move legs to their relative XYZ coordinates"
     assert len(legXYZ) == 6, legXYZ
+    abc=(0.0525, 0.0802, 0.1283)
     servoDirs = (1,-1,1, 1,-1,1, 1,-1,1, -1,1,-1, -1,1,-1, -1,1,-1, 1,1,1,1,1 )
     angles = []
     for xyz in legXYZ:
-      angles.extend( pos2angles10thDeg( xyz, abc=(0.0525, 0.0802, 0.1283) ) )
+      angles.extend( pos2angles10thDeg( xyz, abc=abc ) )
     angles += [0,0,0,0,0] # Head & Pincers
     cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
     if STOP_SERVO in self.lastCmd:
       prev = cmd[:]
     else:
       prev = self.lastCmd
+
+    # undo offset and direction
+    prev = [(angle-offset)*servoDir for angle, servoDir, offset in zip(prev, servoDirs, self.servoOffset)]
+    prevLegXYZ = []
+    for angles in zip(prev[0:-5:3], prev[1:-5:3], prev[2:-5:3]):
+      prevLegXYZ.append( angles10thDeg2pos( angles, abc=abc ) )
     for i in xrange(num):
-      self.update( [((i+1)*new+(num-1-i)*old)/num for old, new in zip(prev,cmd)] )
+      angles = []
+      for xyz1, xyz2 in zip(prevLegXYZ, legXYZ):
+        xyz = [((i+1)*new+(num-1-i)*old)/float(num) for old, new in zip(xyz1,xyz2)]
+        angles.extend( pos2angles10thDeg( xyz, abc=abc ) )
+      angles += [0,0,0,0,0] # Head & Pincers
+      cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
+      self.update( cmd )
 
   def standUp( self ):
     "prepare robot to walking height"
