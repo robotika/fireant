@@ -75,7 +75,7 @@ class FireAnt:
     "wrapper for read-write pair"
     status = self.readStatus()
     self.writeCmd( cmd )
-    print "%d\t%d\t%d\t%d\t%d\t%d" % (status[2:5] + tuple(cmd[:3]))
+#    print "%d\t%d\t%d\t%d\t%d\t%d" % (status[2:5] + tuple(cmd[:3]))
     return status
 
   def init( self ):
@@ -88,7 +88,7 @@ class FireAnt:
     self.update( cmd=[STOP_SERVO]*NUM_SERVOS )
 
 
-  def setLegsXYZ( self, legXYZ, num=2 ):
+  def setLegsXYZG( self, legXYZ, num=2 ):
     "move legs to their relative XYZ coordinates"
     assert len(legXYZ) == 6, legXYZ
     abc=(0.0525, 0.0802, 0.1283)
@@ -115,12 +115,30 @@ class FireAnt:
         angles.extend( pos2angles10thDeg( xyz, abc=abc ) )
       angles += [0,0,0,0,0] # Head & Pincers
       cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
+      yield cmd
+
+  def interpolateAngleCmdG( self, old, new, steps ):
+    for i in xrange(1,steps+1):
+      cmd = [(i*n+(steps-i)*o)/steps for o,n in zip(old,new)]
+      yield cmd
+
+  def setLegsXYZ( self, legXYZ, num=2 ):
+    for cmd in self.setLegsXYZG( legXYZ, num=num ):
       self.update( cmd )
 
-  def standUp( self ):
+  def standUp( self, interpolateFirst=True ):
     "prepare robot to walking height"
     for z in [-0.01*i for i in xrange(12)]:
-      self.setLegsXYZ( [(0.1083, 0.0625, z),(0.125, 0.0, z),(0.1083, -0.0625, z)]*2 )
+      for cmd in self.setLegsXYZG( [(0.1083, 0.0625, z),(0.125, 0.0, z),(0.1083, -0.0625, z)]*2 ):
+        if interpolateFirst: # make sure you are close to initial position
+          old = self.servoPosRaw[:]
+          new = cmd[:]
+          maxAngle = max( [abs(o-n) for o,n in zip(old,new) ] )
+          print "Int:", maxAngle
+          for cmd in self.interpolateAngleCmdG( old, new, steps=maxAngle/50 ):
+            self.update( cmd )
+          interpolateFirst = False
+      self.update( cmd )
 
   def sitDown( self ):
     for z in [-0.01*i for i in xrange(11,0,-1)]:
