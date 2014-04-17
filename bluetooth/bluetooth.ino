@@ -14,7 +14,7 @@ void setup()
   Orion.begin();
   Orion.tone(NOTE_C4,100);  
   Orion.tone(NOTE_D4,100);
-  bluetooth.begin( 9600 );
+  bluetooth.begin( 38400 );
 }
 
 void loop()
@@ -29,6 +29,9 @@ void loop()
   int b;
   b = Serial.read(); 
   if( b >= 0 )
+  {
+    Serial.write( b ); // ECHO
     bluetooth.write( b );
+  }
 }
 
