@@ -15,3 +15,4 @@ Development history:
 * walk --- experiment with Orion walk routines
 
 * ver0 --- minimalized dependence on Orion and calibration
+* ver1 --- skipping Orion library and direct usage of Servo Shield via BASIC
