@@ -3,31 +3,25 @@
 servoindex var byte
 pos var word
 pwr var word
-timeMs var word
+time var word ; unknown units, but it seems that 16bit TCNT counter is running
 
 LIPOCUTOFF con		620*1024/500	;62*1024/5.0
 ADCSR = 0x30	;start scanning AD conversion
 
 HSERVOFEEDBACK
 
-serout s_out, i9600, ["BASIC ver0", 13]
-pause 10
-
 servoindex = 21
-timeMs = 0
+time = 0
 
-; this is causing error characters on serial line ... ONINTERRUPT HSERVOINT,servohandler
+sethserial1 h38400
+
+TCRV0 = 0x03  ;Sets Timer V to count once every 128 OSC clocks
+TCRV1 = 0x01
 
 main
 	hservo[servoindex\-30000+258]
+	time = TCB1
 	pos = hservofbpos( servoindex )
 	pwr = hservofbpwr( servoindex )
-	serout s_out, i9600, [DEC timeMs, " : ", DEC (ADDRA>>4)," SERVO ", DEC pos, " FORCE ", DEC pwr, 13]
-	pause 200
+	hserout s_out, [DEC time, " : ", DEC (ADDRA>>4)," SERVO ", DEC pos, " FORCE ", DEC pwr, 13]
 	goto main
-
-;---------------------
-servohandler
-	; TODO check battery and turn off servos
-	timeMs = timeMs + 20
-	resume
