@@ -14,7 +14,7 @@ pause 10
 servoindex = 21
 
 main
-	hservo[servoindex\0]
+	hservo[servoindex\-30000+258]
 	tmp = hservofbpos( servoindex )
 	serout s_out, i9600, [DEC ADDRA," SERVO ", DEC tmp, 13]
 	pause 200
