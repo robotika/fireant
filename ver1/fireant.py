@@ -18,7 +18,7 @@ from triangle import pos2angles10thDeg, angles10thDeg2pos
 
 verbose = False
 
-NUM_SERVOS = 23
+NUM_SERVOS = 24
 SERIAL_BAUD = 38400
 
 PACKET_START = chr(0xAB)
@@ -50,8 +50,8 @@ class FireAnt:
     chSum = size;
     buf = self.com.read( size + 1 ) # read data + checksum
     assert (size+sum([ord(x) for x in buf])) % 256 == 0, [hex(ord(x)) for x in buf]
-    assert size-4 == 2*NUM_SERVOS, (size, NUM_SERVOS)
-    raw = struct.unpack_from( "HH"+"h"*NUM_SERVOS, buf ) # big indian
+    assert size-4 == 2*2*NUM_SERVOS, (size, NUM_SERVOS)
+    raw = struct.unpack_from( "HH"+"hH"*NUM_SERVOS, buf ) # big indian
     if verbose:
       print raw
       print "TIME\t%d" % raw[0]
@@ -216,6 +216,9 @@ if __name__ == "__main__":
   if task == "readTest":
     robot = FireAnt( robotName, com, runInit=False )
     robot.readTest()
+    for i in xrange(10):
+      robot.readStatus()
+      print robot.time
     sys.exit(0)
 
   robot = FireAnt( robotName, com )

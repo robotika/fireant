@@ -30,8 +30,20 @@ stopAllServos
 	next
 	return
 
+updateTime
+	prev var byte
+	curr var byte
+	prev = time & 0xFF
+	curr = TCB1
+	time = time - prev + curr
+	if curr < prev then
+		time = time + 256	
+	endif
+	return
+
+
 readServoStatus
-	time = TCB1
+	gosub updateTime
 	battery = ADDRA>>4
 	for servoindex = 0 to 23
 		servopos( servoindex ) = hservofbpos( servoindex )
@@ -43,14 +55,18 @@ PACKET_START con 0xAB
 	
 sendServoStatus
 	chSum var byte
+	dataLen var byte
+	dataLen = 2+2+24*2*2
 	chSum = 0
-	hserout s_out, [PACKET_START, 2+24*2*2]
-	hserout s_out, [time]
-	hserout s_out, [battery]
+	hserout s_out, [PACKET_START, dataLen]
+	hserout s_out, [time &0xFF, time>>8 ]
+	hserout s_out, [battery & 0xFF, battery >> 8]
+	chSum = chSum + dataLen + (time & 0xFF) + ((time >> 8)&0xFF) + (battery & 0xFF) + ((battery >> 8)&0xFF)
 	for servoindex = 0 to 23
-		hserout s_out, [servopos( servoindex )]
-		hserout s_out, [servopwr( servoindex )]
+		hserout s_out, [servopos( servoindex )&0xFF, servopos( servoindex )>>8]
+		chSum = chSum + (servopos( servoindex ) & 0xFF) + (servopos( servoindex ) >> 8)
+		hserout s_out, [servopwr( servoindex )&0xFF, servopwr( servoindex )>>8]
+		chSum = chSum + (servopwr( servoindex ) & 0xFF) + (servopwr( servoindex ) >> 8)
 	next
-	; TODO compute chSum
-	hserout s_out, [chSum]
+	hserout s_out, [-chSum]
 	return
