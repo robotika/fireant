@@ -1,5 +1,5 @@
 """
-  FireAnt control via USB cable
+  SERVO SHIELD FireAnt control via USB cable
   usage:
          ./fireant.py <Uno|Due> [calibrate|walk|readTest] [<input logfile> [F]]
 """
@@ -22,7 +22,16 @@ NUM_SERVOS = 24
 SERIAL_BAUD = 38400
 
 PACKET_START = chr(0xAB)
-STOP_SERVO = -32768 # 0x8000
+STOP_SERVO = -30000+258  # -32768 # 0x8000
+SERVO_DEGREE = 176  # ??? servo units/degree maybe x10??
+
+# servoPins[] = { LFC, LFF, LFT,   LMC, LMF, LMT,   LRC, LRF, LRT, 
+#                 RFC, RFF, RFT,   RMC, RMF, RMT,   RRC, RRF, RRT,
+#                 HeadRollPin, HeadYawPin, HeadPitchPin, PincerLPin, PincerRPin }; 
+servoPin = [ 23,22,21,  20,19,18,  17,16,0,
+             15,14,13,  12,11,10,  9,8,1,
+             7,6,5,4,3 ]
+
 
 calibration = {
     'Uno': [0]*NUM_SERVOS,
@@ -44,8 +53,10 @@ class FireAnt:
       self.init()
 
   def readStatus( self ):
-    while self.com.read(1) != PACKET_START:
-      pass
+    c = self.com.read(1)
+    while c != PACKET_START:
+      print c,
+      c = self.com.read(1)
     size = ord(self.com.read(1))
     chSum = size;
     buf = self.com.read( size + 1 ) # read data + checksum
@@ -57,8 +68,8 @@ class FireAnt:
       print "TIME\t%d" % raw[0]
     self.tickTime = raw[0]
     self.time = self.tickTime/1000.0 # TODO 16bit overflow
-    self.power = raw[1]/100.0
-    self.servoPosRaw = raw[2:]
+    self.power = raw[1]*5/1024.
+    self.servoPosRaw = [raw[2::2][i]*10/SERVO_DEGREE for i in servoPin]
     return raw
   
   def writeCmd( self, cmd ):
@@ -66,7 +77,11 @@ class FireAnt:
       print "SEND", self.time
     executeAt = (self.tickTime + int(self.servoUpdateTime*1000)) & 0xFFFF
     servoTime = int(self.servoUpdateTime*1000)
-    buf = struct.pack( "HH"+"h"*NUM_SERVOS, executeAt, servoTime, *cmd )
+    cmd2 = [STOP_SERVO]*NUM_SERVOS
+    for i,v in zip(servoPin, cmd): # reindexing
+      if v != None and v != STOP_SERVO:
+        cmd2[i] = v*SERVO_DEGREE/10
+    buf = struct.pack( "H"+"h"*NUM_SERVOS, executeAt, *cmd2 )
     self.com.write( PACKET_START )
     self.com.write( chr(len(buf)) )
     self.com.write( buf )
@@ -90,7 +105,7 @@ class FireAnt:
     self.update( cmd=[STOP_SERVO]*NUM_SERVOS )
 
 
-  def setLegsXYZG( self, legXYZ, num=2 ):
+  def setLegsXYZG( self, legXYZ, num=20 ):
     "move legs to their relative XYZ coordinates"
     assert len(legXYZ) == 6, legXYZ
     abc=(0.0525, 0.0802, 0.1283)
@@ -124,20 +139,20 @@ class FireAnt:
       cmd = [(i*n+(steps-i)*o)/steps for o,n in zip(old,new)]
       yield cmd
 
-  def setLegsXYZ( self, legXYZ, num=2 ):
+  def setLegsXYZ( self, legXYZ, num=20 ):
     for cmd in self.setLegsXYZG( legXYZ, num=num ):
       self.update( cmd )
 
   def standUp( self, interpolateFirst=True ):
     "prepare robot to walking height"
-    for z in [-0.01*i for i in xrange(12)]:
+    for z in [-0.001*i for i in xrange(120)]:
       for cmd in self.setLegsXYZG( [(0.1083, 0.0625, z),(0.125, 0.0, z),(0.1083, -0.0625, z)]*2 ):
         if interpolateFirst: # make sure you are close to initial position
           old = self.servoPosRaw[:]
           new = cmd[:]
           maxAngle = max( [abs(o-n) for o,n in zip(old,new) ] )
           print "Int:", maxAngle
-          for cmd in self.interpolateAngleCmdG( old, new, steps=maxAngle/50 ):
+          for cmd in self.interpolateAngleCmdG( old, new, steps=maxAngle/5 ):
             self.update( cmd )
           interpolateFirst = False
       self.update( cmd )
@@ -183,7 +198,7 @@ class FireAnt:
 
   def readTest( self, numBytes = 1000 ):
     for i in xrange( numBytes ):
-      ch = com.read(1)
+      ch = self.com.read(1)
       if ch == chr(0xAB):
         print
       print hex(ord(ch)),
@@ -215,10 +230,15 @@ if __name__ == "__main__":
 
   if task == "readTest":
     robot = FireAnt( robotName, com, runInit=False )
-    robot.readTest()
-    for i in xrange(10):
-      robot.readStatus()
-      print robot.time
+    #robot.readTest()
+    cmdOrig = [STOP_SERVO]*NUM_SERVOS
+    for i in xrange(30):
+      #robot.readStatus()
+      cmd = cmdOrig[:]
+      cmd[1] = 0
+      cmd[2] = -300
+      robot.update( cmd=cmd )
+      print robot.time, robot.servoPosRaw[:4]
     sys.exit(0)
 
   robot = FireAnt( robotName, com )

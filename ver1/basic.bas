@@ -2,12 +2,21 @@
 
 STOP_SERVO con -30000+258
 
+TIMEOUT con 100
+
 servoindex var byte
 time var word ; unknown units, but it seems that 16bit TCNT counter is running
 battery var word
 
 servopos var word(24)
 servopwr var word(24)
+
+inputbuf var byte(24*2+2+1) ; execute at, servos position, 
+executeAt var word
+servoCmd var word(24)
+
+chSum var byte
+result var byte
 
 
 LIPOCUTOFF con		620*1024/500	;62*1024/5.0
@@ -21,6 +30,13 @@ gosub stopAllServos
 main
 	gosub readServoStatus
 	gosub sendServoStatus
+	gosub receiveServoCmd, result
+	if result = 1 and battery >= LIPOCUTOFF then
+		; TODO servo battery -> stopAllServos
+		gosub executeServoCmd
+	else
+		gosub stopAllServos
+	endif
 	goto main
 
 ;-------------------------------
@@ -54,7 +70,6 @@ readServoStatus
 PACKET_START con 0xAB
 	
 sendServoStatus
-	chSum var byte
 	dataLen var byte
 	dataLen = 2+2+24*2*2
 	chSum = 0
@@ -69,4 +84,58 @@ sendServoStatus
 		chSum = chSum + (servopwr( servoindex ) & 0xFF) + (servopwr( servoindex ) >> 8)
 	next
 	hserout s_out, [-chSum]
+	return
+
+receiveServoCmd
+	tmp var byte
+	i var byte
+	packetSize var byte
+	hserin s_in, timeoutException, TIMEOUT, [tmp]
+	while tmp <> PACKET_START
+		hserin s_in, timeoutException, TIMEOUT, [tmp]
+	wend
+	hserin s_in, timeoutException, TIMEOUT, [tmp]
+	packetSize = tmp
+	chSum = tmp; checksum is with length included
+	if packetSize = 24*2+2 then
+		for i = 0 to packetSize; including check sum
+			hserin s_in, timeoutException, TIMEOUT, [tmp]
+			inputbuf(i) = tmp
+			chSum = chSum + tmp
+		next
+		if chSum = 0 then
+			; TODO unpack data
+			executeAt = inputbuf(0) + 256*inputbuf(1)
+			for i = 0 to 23
+				servoCmd(i) = inputbuf(2+2*i) + 256*inputbuf(3+2*i)
+			next
+			return 1
+		else
+			hserout s_out, ["ERROR chSum"]
+		endif
+	else
+		hserout s_out, ["ERROR packetSize"]
+	endif
+	return 0
+timeoutException
+	hserout s_out, ["ERROR timeout"]
+	return 0
+
+
+executeServoCmd0
+		hservo[servoindex\servoCmd(21)]
+	return
+	
+executeServoCmd
+;	diffTime var word
+;	gosub updateTime
+;	diffTime = time - executeAt
+;	while diffTime > 0x8000
+;		gosub updateTime
+;		diffTime = time - executeAt
+;	wend	
+	
+	for servoindex = 0 to 23
+		hservo[servoindex\servoCmd(servoindex)]
+	next
 	return
