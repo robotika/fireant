@@ -49,6 +49,8 @@ class FireAnt:
     self.servoPosRaw = None
     self.power = None
     self.lastCmd = None
+    self.cmdId = 0
+    self.receivedCmdId = None
     if runInit:
       self.init()
 
@@ -61,18 +63,20 @@ class FireAnt:
     chSum = size;
     buf = self.com.read( size + 1 ) # read data + checksum
     assert (size+sum([ord(x) for x in buf])) % 256 == 0, [hex(ord(x)) for x in buf]
-    assert size-4 == 2*2*NUM_SERVOS, (size, NUM_SERVOS)
-    raw = struct.unpack_from( "HH"+"hH"*NUM_SERVOS, buf ) # big indian
+    assert size-4-2 == 2*2*NUM_SERVOS, (size, NUM_SERVOS)
+    raw = struct.unpack_from( "HHH"+"hH"*NUM_SERVOS, buf ) # big indian
+    self.receivedCmdId = raw[0]
     if verbose:
       print raw
-      print "TIME\t%d" % raw[0]
-    self.tickTime = raw[0]
+      print "TIME\t%d" % raw[1]
+    self.tickTime = raw[1]
     self.time = self.tickTime/1000.0 # TODO 16bit overflow
-    self.power = raw[1]*5/1024.
-    self.servoPosRaw = [raw[2::2][i]*10/SERVO_DEGREE for i in servoPin]
+    self.power = raw[2]*5/1024.
+    self.servoPosRaw = [raw[3::2][i]*10/SERVO_DEGREE for i in servoPin]
     return raw
   
   def writeCmd( self, cmd ):
+    self.cmdId += 1
     if verbose:
       print "SEND", self.time
     executeAt = (self.tickTime + int(self.servoUpdateTime*1000)) & 0xFFFF
@@ -81,7 +85,7 @@ class FireAnt:
     for i,v in zip(servoPin, cmd): # reindexing
       if v != None and v != STOP_SERVO:
         cmd2[i] = v*SERVO_DEGREE/10
-    buf = struct.pack( "H"+"h"*NUM_SERVOS, executeAt, *cmd2 )
+    buf = struct.pack( "HH"+"h"*NUM_SERVOS, self.cmdId & 0xFFFF, executeAt, *cmd2 )
     self.com.write( PACKET_START )
     self.com.write( chr(len(buf)) )
     self.com.write( buf )
@@ -238,7 +242,7 @@ if __name__ == "__main__":
       cmd[1] = 0
       cmd[2] = -300
       robot.update( cmd=cmd )
-      print robot.time, robot.servoPosRaw[:4]
+      print robot.time, robot.cmdId, robot.receivedCmdId, robot.servoPosRaw[:4]
     sys.exit(0)
 
   robot = FireAnt( robotName, com )
