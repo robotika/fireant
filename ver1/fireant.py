@@ -47,10 +47,12 @@ class FireAnt:
     self.time = 0.0
     self.tickTime = 0
     self.servoPosRaw = None
+    self.servoForceRaw = None
     self.power = None
     self.lastCmd = None
     self.cmdId = 0
     self.receivedCmdId = None
+    self.forceLimit = 4000
     if runInit:
       self.init()
 
@@ -64,7 +66,7 @@ class FireAnt:
     buf = self.com.read( size + 1 ) # read data + checksum
     assert (size+sum([ord(x) for x in buf])) % 256 == 0, [hex(ord(x)) for x in buf]
     assert size-4-2 == 2*2*NUM_SERVOS, (size, NUM_SERVOS)
-    raw = struct.unpack_from( "HHH"+"hH"*NUM_SERVOS, buf ) # big indian
+    raw = struct.unpack_from( "HHH"+"hh"*NUM_SERVOS, buf ) # big indian
     self.receivedCmdId = raw[0]
     if verbose:
       print raw
@@ -73,6 +75,7 @@ class FireAnt:
     self.time = self.tickTime/1000.0 # TODO 16bit overflow
     self.power = raw[2]*5/1024.
     self.servoPosRaw = [raw[3::2][i]*10/SERVO_DEGREE for i in servoPin]
+    self.servoForceRaw = [raw[4::2][i] for i in servoPin]
     return raw
   
   def writeCmd( self, cmd ):
@@ -103,6 +106,13 @@ class FireAnt:
     "skip invalid reading at the beginning"
     for i in xrange(5):
       self.update( cmd=[STOP_SERVO]*NUM_SERVOS )
+#    self.syncCmdId()
+
+  def syncCmdId( self, maxTries=5 ):
+    for i in xrange(maxTries):
+      if self.cmdId != self.receivedCmdId:
+        self.readStatus()
+
 
   def stopServos( self ):
     "stop all servos"
@@ -129,10 +139,18 @@ class FireAnt:
     prevLegXYZ = []
     for angles in zip(prev[0:-5:3], prev[1:-5:3], prev[2:-5:3]):
       prevLegXYZ.append( angles10thDeg2pos( angles, abc=abc ) )
+    triggerZ = [None]*6
     for i in xrange(num):
+      forces = [f*d for f,d in zip(self.servoForceRaw, servoDirs)]
       angles = []
-      for xyz1, xyz2 in zip(prevLegXYZ, legXYZ):
+      for xyz1, xyz2,trig in zip(prevLegXYZ, legXYZ,enumerate(triggerZ)):
         xyz = [((i+1)*new+(num-1-i)*old)/float(num) for old, new in zip(xyz1,xyz2)]
+        if trig[1] != None:
+          xyz[2] = trig[1]
+        elif self.forceLimit != None and forces[1+trig[0]*3] > self.forceLimit:# and xyz1[2]>xyz2[2]:
+          # i.e. trigger enabled and leg is going down
+          triggerZ[trig[0]] = xyz[2]
+          print triggerZ
         angles.extend( pos2angles10thDeg( xyz, abc=abc ) )
       angles += [0,0,0,0,0] # Head & Pincers
       cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
@@ -251,7 +269,7 @@ if __name__ == "__main__":
     robot.calibrate()
   elif task == "walk":
     robot.standUp()
-    robot.walk(10.0)
+    robot.walk(1.0)
     robot.sitDown()
     robot.stopServos()
   else:
