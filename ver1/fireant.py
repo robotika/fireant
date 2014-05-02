@@ -147,7 +147,7 @@ class FireAnt:
         xyz = [((i+1)*new+(num-1-i)*old)/float(num) for old, new in zip(xyz1,xyz2)]
         if trig[1] != None:
           xyz[2] = trig[1]
-        elif self.forceLimit != None and forces[1+trig[0]*3] > self.forceLimit:# and xyz1[2]>xyz2[2]:
+        elif self.forceLimit != None and forces[1+trig[0]*3] > self.forceLimit and xyz1[2]>xyz2[2]:
           # i.e. trigger enabled and leg is going down
           triggerZ[trig[0]] = xyz[2]
           print triggerZ
