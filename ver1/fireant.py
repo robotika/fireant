@@ -45,7 +45,7 @@ class FireAnt:
     self.com = com
     self.servoUpdateTime = 0.1
     self.time = 0.0
-    self.tickTime = 0
+    self.tickTime = None
     self.servoPosRaw = None
     self.servoForceRaw = None
     self.power = None
@@ -71,8 +71,15 @@ class FireAnt:
     if verbose:
       print raw
       print "TIME\t%d" % raw[1]
+    prevTickTime = self.tickTime
     self.tickTime = raw[1]
-    self.time = self.tickTime/1000.0 # TODO 16bit overflow
+    if prevTickTime == None:
+      self.time = 0.0
+    else:
+      d = self.tickTime-prevTickTime
+      if d < 0:
+        d += 0x10000
+      self.time += d*8192/20000000. # H8/3687 is probably running at 20Mhz with 8192 prescaler
     self.power = raw[2]*5/1024.
     self.servoPosRaw = [raw[3::2][i]*10/SERVO_DEGREE for i in servoPin]
     self.servoForceRaw = [raw[4::2][i] for i in servoPin]
