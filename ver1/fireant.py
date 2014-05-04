@@ -89,8 +89,7 @@ class FireAnt:
     self.cmdId += 1
     if verbose:
       print "SEND", self.time
-    executeAt = (self.tickTime + int(self.servoUpdateTime*1000)) & 0xFFFF
-    servoTime = int(self.servoUpdateTime*1000)
+    executeAt = (self.tickTime + 100) & 0xFFFF
     cmd2 = [STOP_SERVO]*NUM_SERVOS
     for i,v in zip(servoPin, cmd): # reindexing
       if v != None and v != STOP_SERVO:
@@ -113,12 +112,14 @@ class FireAnt:
     "skip invalid reading at the beginning"
     for i in xrange(5):
       self.update( cmd=[STOP_SERVO]*NUM_SERVOS )
-#    self.syncCmdId()
+    self.syncCmdId()
 
   def syncCmdId( self, maxTries=5 ):
+    print "SYNC", self.cmdId, self.receivedCmdId
     for i in xrange(maxTries):
-      if self.cmdId != self.receivedCmdId:
+      if self.cmdId != self.receivedCmdId and self.cmdId != self.receivedCmdId + 1:
         self.readStatus()
+        print self.receivedCmdId,
 
 
   def stopServos( self ):
@@ -209,6 +210,8 @@ class FireAnt:
       self.setLegsXYZ( [(0.1083, 0.0625+s, down),(0.125, 0.0-s, down),(0.1083, -0.0625+s, down),
                         (0.1083, 0.0625-s, down),(0.125, 0.0+s, down),(0.1083, -0.0625-s, down)] )
       dist -= 8*s
+      self.syncCmdId()
+
 
   def calibrate( self, duration=3.0 ):
     "verify servos center point calibration"
@@ -276,7 +279,7 @@ if __name__ == "__main__":
     robot.calibrate()
   elif task == "walk":
     robot.standUp()
-    robot.walk(1.0)
+    robot.walk(10.0)
     robot.sitDown()
     robot.stopServos()
   else:

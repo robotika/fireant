@@ -130,13 +130,13 @@ executeServoCmd0
 	return
 	
 executeServoCmd
-;	diffTime var word
-;	gosub updateTime
-;	diffTime = time - executeAt
-;	while diffTime > 0x8000
-;		gosub updateTime
-;		diffTime = time - executeAt
-;	wend	
+	diffTime var word
+	gosub updateTime
+	diffTime = time - executeAt
+	while diffTime > 0x8000
+		gosub updateTime
+		diffTime = time - executeAt
+	wend	
 	
 	for servoindex = 0 to 23
 		hservo[servoindex\servoCmd(servoindex)]
