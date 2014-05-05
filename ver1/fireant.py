@@ -95,6 +95,7 @@ class FireAnt:
       if v != None and v != STOP_SERVO:
         cmd2[i] = v*SERVO_DEGREE/10
     buf = struct.pack( "HH"+"h"*NUM_SERVOS, self.cmdId & 0xFFFF, executeAt, *cmd2 )
+#    print "\tgosub execute", cmd2
     self.com.write( PACKET_START )
     self.com.write( chr(len(buf)) )
     self.com.write( buf )
@@ -174,6 +175,7 @@ class FireAnt:
       self.update( cmd )
 
   def standUp( self, interpolateFirst=True ):
+    print "standUp"
     "prepare robot to walking height"
     for z in [-0.001*i for i in xrange(120)]:
       for cmd in self.setLegsXYZG( [(0.1083, 0.0625, z),(0.125, 0.0, z),(0.1083, -0.0625, z)]*2 ):
@@ -198,6 +200,7 @@ class FireAnt:
       self.update( cmd )
 
   def walk( self, dist ):
+    print "walk"
     up,down = -0.02, -0.11
     s = 0.02 # step
     while dist > 0:
