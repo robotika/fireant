@@ -24,7 +24,7 @@ LIPOCUTOFF con		620*1024/500	;62*1024/5.0
 ADCSR = 0x30	;start scanning AD conversion
 
 HSERVOFEEDBACK
-sethserial1 h38400
+sethserial1 h62500
 
 gosub stopAllServos
 

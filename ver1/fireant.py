@@ -19,7 +19,7 @@ from triangle import pos2angles10thDeg, angles10thDeg2pos
 verbose = False
 
 NUM_SERVOS = 24
-SERIAL_BAUD = 38400
+SERIAL_BAUD = 62500
 
 PACKET_START = chr(0xAB)
 STOP_SERVO = -30000+258  # -32768 # 0x8000
