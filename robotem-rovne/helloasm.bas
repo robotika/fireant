@@ -10,7 +10,7 @@ _main:
 _init:
 	push.w r1
 	sub.b r1l,r1l ; clear R1L
-	mov.b r1l,@SMR
+	mov.b r1l,@SCR3
 	mov #15,r1l
 	mov.b r1l,@BRR ; 38400 at 20MHz
 	mov.w #0x115,r1
@@ -18,7 +18,7 @@ _initWait:
 	dec.w #1,r1
 	bne _initWait	
 	mov.b #0x30,r1l
-	mov.b r1l,@SMR
+	mov.b r1l,@SCR3
 	bset.b #1,@PMR1
 	pop.w r1
 	rts
