@@ -11,6 +11,8 @@ import ctypes
 import math
 import struct
 
+from math import cos, sin
+
 sys.path.append( ".."+os.sep+"serial_servo") 
 from serial_servo import LogIt, ReplayLog, ReplyLogInputsOnly
 sys.path.append( ".."+os.sep+"ver0") 
@@ -197,7 +199,10 @@ class FireAnt:
       self.setLegsXYZ( [(0.1083, 0.0625, z),(0.125, 0.0, z),(0.1083, -0.0625, z)]*2 )
 
   def wait( self, duration ):
-    cmd = self.servoPosRaw[:]
+    if self.lastCmd == None:
+      cmd = self.servoPosRaw[:]
+    else:
+      cmd = self.lastCmd[:]
     startTime = self.time
     while self.time < startTime+duration:
       self.update( cmd )
@@ -207,15 +212,21 @@ class FireAnt:
     up,down = -0.02, -0.11
     sx = 0.02 # step
     sy = 0.0
+    a = math.radians(1.0)
+    d = 0.125
+    la = math.radians(30.) # legs angle
+    t = 0.0
     while dist > 0:
-      self.setLegsXYZ( [(0.1083-sy, 0.0625-sx, down),(0.125+sy, 0.0+sx, up),(0.1083-sy, -0.0625-sx, down),
-                        (0.1083-sy, 0.0625+sx, up),(0.125+sy, 0.0-sx, down),(0.1083-sy, -0.0625+sx, up)] )
-      self.setLegsXYZ( [(0.1083-sy, 0.0625-sx, down),(0.125+sy, 0.0+sx, down),(0.1083-sy, -0.0625-sx, down),
-                        (0.1083-sy, 0.0625+sx, down),(0.125+sy, 0.0-sx, down),(0.1083-sy, -0.0625+sx, down)] )
-      self.setLegsXYZ( [(0.1083+sy, 0.0625+sx, up),(0.125-sy, 0.0-sx, down),(0.1083+sy, -0.0625+sx, up),
-                        (0.1083+sy, 0.0625-sx, down),(0.125-sy, 0.0+sx, up),(0.1083+sy, -0.0625-sx, down)] )
-      self.setLegsXYZ( [(0.1083+sy, 0.0625+sx, down),(0.125-sy, 0.0-sx, down),(0.1083+sy, -0.0625+sx, down),
-                        (0.1083+sy, 0.0625-sx, down),(0.125-sy, 0.0+sx, down),(0.1083+sy, -0.0625-sx, down)] )
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)-sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, up),  (d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, up),  (d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)+sx, up)] )
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)-sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)+sx, down)] )
+      self.wait(t)
+      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)+sx, up),  (d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, up),
+                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)+sx, up),    (d*cos(-la-a)+sy, d*sin(-la-a)-sx, down)] )
+      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)+sx, down),(d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, down),
+                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)+sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)-sx, down)] )
+      self.wait(t)
       dist -= 8*math.hypot(sx,sy)
 #      self.syncCmdId()
 
