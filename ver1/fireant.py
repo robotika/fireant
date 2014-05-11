@@ -205,17 +205,18 @@ class FireAnt:
   def walk( self, dist ):
     print "walk"
     up,down = -0.02, -0.11
-    s = 0.02 # step
+    sx = 0.02 # step
+    sy = 0.0
     while dist > 0:
-      self.setLegsXYZ( [(0.1083, 0.0625-s, down),(0.125, 0.0+s, up),(0.1083, -0.0625-s, down),
-                        (0.1083, 0.0625+s, up),(0.125, 0.0-s, down),(0.1083, -0.0625+s, up)] )
-      self.setLegsXYZ( [(0.1083, 0.0625-s, down),(0.125, 0.0+s, down),(0.1083, -0.0625-s, down),
-                        (0.1083, 0.0625+s, down),(0.125, 0.0-s, down),(0.1083, -0.0625+s, down)] )
-      self.setLegsXYZ( [(0.1083, 0.0625+s, up),(0.125, 0.0-s, down),(0.1083, -0.0625+s, up),
-                        (0.1083, 0.0625-s, down),(0.125, 0.0+s, up),(0.1083, -0.0625-s, down)] )
-      self.setLegsXYZ( [(0.1083, 0.0625+s, down),(0.125, 0.0-s, down),(0.1083, -0.0625+s, down),
-                        (0.1083, 0.0625-s, down),(0.125, 0.0+s, down),(0.1083, -0.0625-s, down)] )
-      dist -= 8*s
+      self.setLegsXYZ( [(0.1083-sy, 0.0625-sx, down),(0.125+sy, 0.0+sx, up),(0.1083-sy, -0.0625-sx, down),
+                        (0.1083-sy, 0.0625+sx, up),(0.125+sy, 0.0-sx, down),(0.1083-sy, -0.0625+sx, up)] )
+      self.setLegsXYZ( [(0.1083-sy, 0.0625-sx, down),(0.125+sy, 0.0+sx, down),(0.1083-sy, -0.0625-sx, down),
+                        (0.1083-sy, 0.0625+sx, down),(0.125+sy, 0.0-sx, down),(0.1083-sy, -0.0625+sx, down)] )
+      self.setLegsXYZ( [(0.1083+sy, 0.0625+sx, up),(0.125-sy, 0.0-sx, down),(0.1083+sy, -0.0625+sx, up),
+                        (0.1083+sy, 0.0625-sx, down),(0.125-sy, 0.0+sx, up),(0.1083+sy, -0.0625-sx, down)] )
+      self.setLegsXYZ( [(0.1083+sy, 0.0625+sx, down),(0.125-sy, 0.0-sx, down),(0.1083+sy, -0.0625+sx, down),
+                        (0.1083+sy, 0.0625-sx, down),(0.125-sy, 0.0+sx, down),(0.1083+sy, -0.0625-sx, down)] )
+      dist -= 8*math.hypot(sx,sy)
 #      self.syncCmdId()
 
 
