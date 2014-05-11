@@ -2,7 +2,7 @@
 
 STOP_SERVO con -30000+258
 
-TIMEOUT con 100
+TIMEOUT con 1000
 
 servoindex var byte
 time var word ; unknown units, but it seems that 16bit TCNT counter is running
@@ -24,7 +24,7 @@ LIPOCUTOFF con		620*1024/500	;62*1024/5.0
 ADCSR = 0x30	;start scanning AD conversion
 
 HSERVOFEEDBACK
-sethserial1 h62500
+sethserial1 h38400	;h62500
 
 gosub stopAllServos
 
@@ -93,10 +93,12 @@ receiveServoCmd
 	tmp var byte
 	i var byte
 	packetSize var byte
+	i = 255
 	hserin s_in, timeoutException, TIMEOUT, [tmp]
 	while tmp <> PACKET_START
 		hserin s_in, timeoutException, TIMEOUT, [tmp]
 	wend
+	i = 254
 	hserin s_in, timeoutException, TIMEOUT, [tmp]
 	packetSize = tmp
 	chSum = tmp; checksum is with length included
@@ -121,7 +123,7 @@ receiveServoCmd
 	endif
 	return 0
 timeoutException
-	hserout s_out, ["ERROR timeout"]
+	hserout s_out, ["ERROR timeout", DEC i, 13]
 	return 0
 
 

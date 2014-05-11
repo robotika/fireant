@@ -1,7 +1,7 @@
 """
   SERVO SHIELD FireAnt control via USB cable
   usage:
-         ./fireant.py <Uno|Due> [calibrate|walk|readTest] [<input logfile> [F]]
+         ./fireant.py <Uno|Due> [calibrate|walk|readTest] [<input logfile> [F|FF]]
 """
 import sys
 import os
@@ -12,14 +12,14 @@ import math
 import struct
 
 sys.path.append( ".."+os.sep+"serial_servo") 
-from serial_servo import LogIt, ReplayLog
+from serial_servo import LogIt, ReplayLog, ReplyLogInputsOnly
 sys.path.append( ".."+os.sep+"ver0") 
 from triangle import pos2angles10thDeg, angles10thDeg2pos
 
 verbose = False
 
 NUM_SERVOS = 24
-SERIAL_BAUD = 62500
+SERIAL_BAUD = 38400 #62500
 
 PACKET_START = chr(0xAB)
 STOP_SERVO = -30000+258  # -32768 # 0x8000
@@ -57,33 +57,36 @@ class FireAnt:
       self.init()
 
   def readStatus( self ):
-    c = self.com.read(1)
-    while c != PACKET_START:
-      print c,
+    while True:
       c = self.com.read(1)
-    size = ord(self.com.read(1))
-    chSum = size;
-    buf = self.com.read( size + 1 ) # read data + checksum
-    assert (size+sum([ord(x) for x in buf])) % 256 == 0, [hex(ord(x)) for x in buf]
-    assert size-4-2 == 2*2*NUM_SERVOS, (size, NUM_SERVOS)
-    raw = struct.unpack_from( "HHH"+"hh"*NUM_SERVOS, buf ) # big indian
-    self.receivedCmdId = raw[0]
-    if verbose:
-      print raw
-      print "TIME\t%d" % raw[1]
-    prevTickTime = self.tickTime
-    self.tickTime = raw[1]
-    if prevTickTime == None:
-      self.time = 0.0
-    else:
-      d = self.tickTime-prevTickTime
-      if d < 0:
-        d += 0x10000
-      self.time += d*8192/20000000. # H8/3687 is probably running at 20Mhz with 8192 prescaler
-    self.power = raw[2]*5/1024.
-    self.servoPosRaw = [raw[3::2][i]*10/SERVO_DEGREE for i in servoPin]
-    self.servoForceRaw = [raw[4::2][i] for i in servoPin]
-    return raw
+      while c != PACKET_START:
+        print c,
+        c = self.com.read(1)
+      size = ord(self.com.read(1))
+      chSum = size;
+      buf = self.com.read( size + 1 ) # read data + checksum
+      if (size+sum([ord(x) for x in buf])) % 256 == 0:
+        assert size-4-2 == 2*2*NUM_SERVOS, (size, NUM_SERVOS)
+        raw = struct.unpack_from( "HHH"+"hh"*NUM_SERVOS, buf ) # big indian
+        self.receivedCmdId = raw[0]
+        if verbose:
+          print raw
+          print "TIME\t%d" % raw[1]
+        prevTickTime = self.tickTime
+        self.tickTime = raw[1]
+        if prevTickTime == None:
+          self.time = 0.0
+        else:
+          d = self.tickTime-prevTickTime
+          if d < 0:
+            d += 0x10000
+          self.time += d*8192/20000000. # H8/3687 is probably running at 20Mhz with 8192 prescaler
+        self.power = raw[2]*5/1024.
+        self.servoPosRaw = [raw[3::2][i]*10/SERVO_DEGREE for i in servoPin]
+        self.servoForceRaw = [raw[4::2][i] for i in servoPin]
+        return raw
+      else:
+        print "ASSERT checksum", [hex(ord(x)) for x in buf]
   
   def writeCmd( self, cmd ):
     self.cmdId += 1
@@ -113,7 +116,7 @@ class FireAnt:
     "skip invalid reading at the beginning"
     for i in xrange(5):
       self.update( cmd=[STOP_SERVO]*NUM_SERVOS )
-    self.syncCmdId()
+#    self.syncCmdId()
 
   def syncCmdId( self, maxTries=5 ):
     print "SYNC", self.cmdId, self.receivedCmdId
@@ -213,7 +216,7 @@ class FireAnt:
       self.setLegsXYZ( [(0.1083, 0.0625+s, down),(0.125, 0.0-s, down),(0.1083, -0.0625+s, down),
                         (0.1083, 0.0625-s, down),(0.125, 0.0+s, down),(0.1083, -0.0625-s, down)] )
       dist -= 8*s
-      self.syncCmdId()
+#      self.syncCmdId()
 
 
   def calibrate( self, duration=3.0 ):
@@ -245,16 +248,21 @@ if __name__ == "__main__":
   robotName = sys.argv[1]
   filename = None
   task = sys.argv[2]
+  com = None
   if len(sys.argv) > 3:
     replayAssert = True
     filename = sys.argv[3]
     if len(sys.argv) > 4:
-      assert sys.argv[4] == 'F'
-      replayAssert = False
+      assert sys.argv[4] in ['F','FF']
+      if sys.argv[2] == 'F':
+        replayAssert = False
+      else:
+        com = ReplyLogInputsOnly( filename )
   assert robotName in ['Uno', 'Due'], robotName
 
   if filename:
-    com = ReplayLog( filename, assertWrite=replayAssert )
+    if com == None:
+      com = ReplayLog( filename, assertWrite=replayAssert )
     verbose = False #True
   else:
     if sys.platform == 'linux2':
@@ -267,13 +275,15 @@ if __name__ == "__main__":
     robot = FireAnt( robotName, com, runInit=False )
     #robot.readTest()
     cmdOrig = [STOP_SERVO]*NUM_SERVOS
-    for i in xrange(30):
+    for i in xrange(3000):
       #robot.readStatus()
       cmd = cmdOrig[:]
       cmd[1] = 0
       cmd[2] = -300
+      prev = robot.receivedCmdId
       robot.update( cmd=cmd )
-      print robot.time, robot.cmdId, robot.receivedCmdId, robot.servoPosRaw[:4]
+      if prev == None or prev + 1 != robot.receivedCmdId:
+        print robot.time, robot.cmdId, robot.receivedCmdId, robot.servoPosRaw[:4]
     sys.exit(0)
 
   robot = FireAnt( robotName, com )

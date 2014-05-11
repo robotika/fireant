@@ -77,6 +77,30 @@ class ReplayLog():
 
 #-------------------------------------------------------------------
 
+class ReplyLogInputsOnly():
+  "Read & verify log"
+  def __init__( self, filename ):
+    print "ReplyLogInputOnly", filename
+    self._logFile = open( filename, "rb" )
+
+  def read( self, numChars ):
+    s = []
+    for i in range(numChars):
+      while( self._logFile.read(1) not in [chr(0x01), ''] ):
+        c = self._logFile.read(1) # skip write output
+        if not c:
+          raise LogEnd()
+        assert( i == 0 ) # the packets should be complete
+      s.append(self._logFile.read(1))
+      if not s[-1]:
+        raise LogEnd()
+    return ''.join(s)
+
+  def write( self, chars ):
+    pass 
+  
+#-------------------------------------------------------------------
+
 START_BLOCK = chr(0x80)
 END_BLOCK = chr(0x81)
 STOP_SERVO = chr(0x82)
