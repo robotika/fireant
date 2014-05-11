@@ -212,7 +212,7 @@ class FireAnt:
     up,down = -0.02, -0.11
     sx = 0.02 # step
     sy = 0.0
-    a = math.radians(1.0)
+    a = math.radians(0.3)
     d = 0.125
     la = math.radians(30.) # legs angle
     t = 0.0
