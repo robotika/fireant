@@ -14,7 +14,7 @@ void setup()
   Orion.begin();
   Orion.tone(NOTE_C4,100);  
   Orion.tone(NOTE_D4,100);
-  bluetooth.begin( 38400 );
+  bluetooth.begin( 9600 );
 }
 
 void loop()
