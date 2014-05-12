@@ -63,6 +63,8 @@ class FireAnt:
       c = self.com.read(1)
       while c != PACKET_START:
         print c,
+        if ord(c) == 13:
+          print
         c = self.com.read(1)
       size = ord(self.com.read(1))
       chSum = size;
