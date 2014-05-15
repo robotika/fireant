@@ -4,8 +4,12 @@
 #define GREENLED A1
 #define REDLED A0
 
-#define RXD 0
-#define TXD 1
+//#define RXD 0
+//#define TXD 1
+
+// Bluetooth pins
+#define RXD 8
+#define TXD 9
 
 void setup()
 {
@@ -13,6 +17,8 @@ void setup()
   pinMode( REDLED, OUTPUT );
   pinMode( TXD, OUTPUT );
   pinMode( MOSI, OUTPUT );
+  pinMode( RXD, INPUT );
+  digitalWrite( RXD, HIGH ); // pullup required for Bluetooth module
 }
 
 void loop()
