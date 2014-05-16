@@ -16,14 +16,14 @@ void setup()
   pinMode( GREENLED, OUTPUT );
   pinMode( REDLED, OUTPUT );
   pinMode( TXD, OUTPUT );
-  pinMode( MOSI, OUTPUT );
+  pinMode( 1, OUTPUT );
   pinMode( RXD, INPUT );
   digitalWrite( RXD, HIGH ); // pullup required for Bluetooth module
 }
 
 void loop()
 {
-  if( digitalRead( MISO ) == LOW )
+  if( digitalRead( 0 ) == LOW )
   {
     digitalWrite( GREENLED, LOW );
     digitalWrite( TXD, LOW );
@@ -36,12 +36,12 @@ void loop()
   if( digitalRead( RXD ) == LOW )
   {
     digitalWrite( REDLED, LOW );
-    digitalWrite( MOSI, LOW );
+    digitalWrite( 1, LOW );
   }
   else
   {
     digitalWrite( REDLED, HIGH );
-    digitalWrite( MOSI, HIGH );
+    digitalWrite( 1, HIGH );
   }
 }
 
