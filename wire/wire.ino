@@ -24,29 +24,35 @@ void setup()
   digitalWrite( RXD, HIGH ); // pullup (to handle not connected pin(?))  
 }
 
+void loopSlow()
+{
+  noInterrupts();
+  for(;;)
+  { 
+//   digitalWrite( BT_TXD, digitalRead( MISO ));
+//   digitalWrite( MOSI, digitalRead( BT_RXD ));
+
+//   digitalWrite( BT_TXD, digitalRead( RXD ));
+//   digitalWrite( TXD, digitalRead( BT_RXD ));
+
+   digitalWrite( TXD, digitalRead( RXD ));
+  }
+}
+
 void loop()
 {
-  if( digitalRead( MISO ) == LOW )
-  {
-    digitalWrite( TXD, LOW );
-    digitalWrite( BT_TXD, LOW );
-    digitalWrite( GREENLED, HIGH );
-  }
-  else
-  {
-    digitalWrite( TXD, HIGH );
-    digitalWrite( BT_TXD, HIGH );
-    digitalWrite( GREENLED, LOW );
-  }
-  if( digitalRead( RXD ) == LOW || digitalRead( BT_RXD ) == LOW )
-  {
-    digitalWrite( MOSI, LOW );
-    digitalWrite( REDLED, HIGH );
-  }
-  else
-  {
-    digitalWrite( MOSI, HIGH );
-    digitalWrite( REDLED, LOW );
-  }
+  // syntax taken from http://www.nongnu.org/avr-libc/user-manual/inline_asm.html
+  // PD0 = RXD ... PIND=0x09, PORTD=0x0B
+  // PD1 = TXD
+  // PB3 = MOSI
+  // PB4 = MISO
+  asm volatile (
+    "cli"  "\n\t" // disable interrupts
+   "1:" " sbis 0x9,0"   "\n\t"
+    "cbi 0xB,1"    "\n\t"
+    "sbic 0x9,0"   "\n\t"
+    "sbi 0xB,1"    "\n\t"
+    "rjmp 1b" "\n\t"
+    ::);
 }
 
