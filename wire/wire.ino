@@ -52,7 +52,7 @@ void loopSlow()
 // PB1 = 9 BT_TXD
 
 // Bluetooth <-> Servo Shield
-void loop()
+void loopBTver0()
 {
   asm volatile (
     "cli"  "\n\t" // disable interrupts
@@ -68,6 +68,34 @@ void loop()
     "rjmp 1b" "\n\t" // 2
     ::);
 }
+
+void loop()
+{
+  asm volatile (
+    "cli"  "\n\t" // disable interrupts
+   "1:"
+    "in r1, 0x3"   "\n\t"
+    
+    "sbis 0x3,0"   "\n\t"
+    "cbi 0x5,3"    "\n\t"
+    "sbic 0x3,0"   "\n\t"
+    "sbi 0x5,3"    "\n\t"
+    
+    "sbis 0x3,4"   "\n\t"  // 1/2/3
+    "cbi 0x5,1"    "\n\t"  // 2
+    "sbic 0x3,4"   "\n\t"
+    "sbi 0x5,1"    "\n\t" // 2
+    
+  "2:"
+    "in r0, 0x3"   "\n\t" // 1
+    "eor r0, r1"   "\n\t" // 1
+    "breq 2b"      "\n\t" // 1/2
+    
+    "rjmp 1b" "\n\t" // 2
+    ::);
+}
+
+
 
 // setup BT
 void loopSetupBT()
