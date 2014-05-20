@@ -29,28 +29,59 @@ void loopSlow()
   noInterrupts();
   for(;;)
   { 
+    digitalWrite( TXD, digitalRead( MISO ));
+    digitalWrite( MOSI, digitalRead( RXD ));
+
 //   digitalWrite( BT_TXD, digitalRead( MISO ));
 //   digitalWrite( MOSI, digitalRead( BT_RXD ));
 
 //   digitalWrite( BT_TXD, digitalRead( RXD ));
 //   digitalWrite( TXD, digitalRead( BT_RXD ));
 
-   digitalWrite( TXD, digitalRead( RXD ));
+//   digitalWrite( TXD, digitalRead( RXD ));
   }
 }
 
+
+// syntax taken from http://www.nongnu.org/avr-libc/user-manual/inline_asm.html
+// PD0 = RXD ... PIND=0x09, PORTD=0x0B
+// PD1 = TXD
+// PB3 = MOSI ... PINB=0x03, PORTB=0x05
+// PB4 = MISO
+// PB0 = 8 BT_RXD
+// PB1 = 9 BT_TXD
+
+// Bluetooth <-> Servo Shield
 void loop()
 {
-  // syntax taken from http://www.nongnu.org/avr-libc/user-manual/inline_asm.html
-  // PD0 = RXD ... PIND=0x09, PORTD=0x0B
-  // PD1 = TXD
-  // PB3 = MOSI
-  // PB4 = MISO
+  asm volatile (
+    "cli"  "\n\t" // disable interrupts
+   "1:" " sbis 0x3,0"   "\n\t"
+    "cbi 0x5,3"    "\n\t"
+    "sbic 0x3,0"   "\n\t"
+    "sbi 0x5,3"    "\n\t"
+    
+    "sbis 0x3,4"   "\n\t"  // 1/2/3
+    "cbi 0x5,1"    "\n\t"  // 2
+    "sbic 0x3,4"   "\n\t"
+    "sbi 0x5,1"    "\n\t" // 2
+    "rjmp 1b" "\n\t" // 2
+    ::);
+}
+
+// setup BT
+void loopSetupBT()
+{
   asm volatile (
     "cli"  "\n\t" // disable interrupts
    "1:" " sbis 0x9,0"   "\n\t"
-    "cbi 0xB,1"    "\n\t"
+    "cbi 0x5,1"    "\n\t"
     "sbic 0x9,0"   "\n\t"
+    "sbi 0x5,1"    "\n\t"
+    
+    "sbis 0x3,0"   "\n\t"
+    "cbi 0xB,1"    "\n\t"
+    "sbic 0x3,0"   "\n\t"
     "sbi 0xB,1"    "\n\t"
     "rjmp 1b" "\n\t"
     ::);
