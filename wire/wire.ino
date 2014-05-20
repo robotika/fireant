@@ -69,7 +69,7 @@ void loopBTver0()
     ::);
 }
 
-void loop()
+void loopBTver1()
 {
   asm volatile (
     "cli"  "\n\t" // disable interrupts
@@ -90,6 +90,25 @@ void loop()
     ::);
 }
 
+void loop()
+{
+  // version from VlastimilD
+  asm volatile (
+    "cli"  "\n\t" // disable interrupts
+    "in r20, 0x5"   "\n\t" // 1
+   "1:"
+    "in r21, 0x3"   "\n\t" // 1
+    
+    "bst r21,0"    "\n\t" // 1
+    "bld r20,3"    "\n\t" // 1
+    "bst r21,4"    "\n\t" // 1
+    "bld r20,1"    "\n\t" // 1    
+    
+    "out 0x5, r20"  "\n\t" // 1
+    
+    "rjmp 1b" "\n\t" // 2
+    ::);
+}
 
 
 // setup BT
