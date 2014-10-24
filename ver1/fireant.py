@@ -268,7 +268,8 @@ class FireAnt:
     "one leg rises a time"
     print "walk6"
     sx = 0.05
-    seq = [ 
+    sz = -0.03 # front/back tilt to climb the obstacle
+    seq0 = [ 
         [[0], sx, 0, 0,  0, 0, 0],
         [[3], sx, 0, 0,  sx, 0, 0],
         [[1], sx, sx, 0, sx, 0, 0],
@@ -276,6 +277,15 @@ class FireAnt:
         [[2], sx, sx, sx,  sx, sx, 0],
         [[5], sx, sx, sx,  sx, sx, sx],
         [[], 0, 0, 0,  0, 0, 0],
+        ]
+    seq = [ 
+        [[0], sx, 0, -sx,  0, 0, -sx],
+        [[3], sx, 0, -sx,  sx, 0, -sx],
+        [[1], sx, sx, -sx, sx, 0, -sx],
+        [[4], sx, sx, -sx, sx, sx, -sx],
+        [[2], sx, sx, 0,  sx, sx, -sx],
+        [[5], sx, sx, 0,  sx, sx, 0],
+        [[], 0, 0, -sx,  0, 0, -sx],
         ]
 
     d = 0.125
@@ -289,10 +299,10 @@ class FireAnt:
             z.append( up )
           else:
             z.append( down )
-        self.setLegsXYZ( [(d*cos(la), d*sin(la)+sx0, z[0]),  (d, sx1, z[1]),(d*cos(-la), d*sin(-la)+sx2, z[2]),
-                          (d*cos(la), d*sin(la)+sx3, z[3]),  (d, sx4, z[4]),(d*cos(-la), d*sin(-la)+sx5, z[5])] )
-        self.setLegsXYZ( [(d*cos(la), d*sin(la)+sx0, down),  (d, sx1, down),(d*cos(-la), d*sin(-la)+sx2, down),
-                          (d*cos(la), d*sin(la)+sx3, down),  (d, sx4, down),(d*cos(-la), d*sin(-la)+sx5, down)] )
+        self.setLegsXYZ( [(d*cos(la), d*sin(la)+sx0, z[0]+sz),  (d, sx1, z[1]),(d*cos(-la), d*sin(-la)+sx2, z[2]-sz),
+                          (d*cos(la), d*sin(la)+sx3, z[3]+sz),  (d, sx4, z[4]),(d*cos(-la), d*sin(-la)+sx5, z[5]-sz)] )
+        self.setLegsXYZ( [(d*cos(la), d*sin(la)+sx0, down+sz),  (d, sx1, down),(d*cos(-la), d*sin(-la)+sx2, down-sz),
+                          (d*cos(la), d*sin(la)+sx3, down+sz),  (d, sx4, down),(d*cos(-la), d*sin(-la)+sx5, down-sz)] )
 
 
   def calibrate( self, duration=3.0 ):
