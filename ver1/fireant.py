@@ -264,6 +264,37 @@ class FireAnt:
       dist -= 8*math.hypot(sx,sy)
 
 
+  def walk6( self, dist ):
+    "one leg rises a time"
+    print "walk6"
+    sx = 0.05
+    seq = [ 
+        [[0], sx, 0, 0,  0, 0, 0],
+        [[3], sx, 0, 0,  sx, 0, 0],
+        [[1], sx, sx, 0, sx, 0, 0],
+        [[4], sx, sx, 0, sx, sx, 0],
+        [[2], sx, sx, sx,  sx, sx, 0],
+        [[5], sx, sx, sx,  sx, sx, sx],
+        [[], 0, 0, 0,  0, 0, 0],
+        ]
+
+    d = 0.125
+    la = math.radians(30.) # legs angle
+    up,down = -0.02, -0.11
+    while dist > 0:
+      for upList, sx0, sx1, sx2, sx3, sx4, sx5 in seq:
+        z = []
+        for i in xrange(6):
+          if i in upList:
+            z.append( up )
+          else:
+            z.append( down )
+        self.setLegsXYZ( [(d*cos(la), d*sin(la)+sx0, z[0]),  (d, sx1, z[1]),(d*cos(-la), d*sin(-la)+sx2, z[2]),
+                          (d*cos(la), d*sin(la)+sx3, z[3]),  (d, sx4, z[4]),(d*cos(-la), d*sin(-la)+sx5, z[5])] )
+        self.setLegsXYZ( [(d*cos(la), d*sin(la)+sx0, down),  (d, sx1, down),(d*cos(-la), d*sin(-la)+sx2, down),
+                          (d*cos(la), d*sin(la)+sx3, down),  (d, sx4, down),(d*cos(-la), d*sin(-la)+sx5, down)] )
+
+
   def calibrate( self, duration=3.0 ):
     "verify servos center point calibration"
     cmd=[STOP_SERVO]*NUM_SERVOS
@@ -287,7 +318,7 @@ class FireAnt:
       print hex(ord(ch)),
 
 if __name__ == "__main__":
-  if len(sys.argv) < 3 or sys.argv[2] not in ["calibrate", "walk", "walk2", "readTest"]:
+  if len(sys.argv) < 3 or sys.argv[2] not in ["calibrate", "walk", "walk2", "walk6", "readTest"]:
     print __doc__
     sys.exit(-1)
   robotName = sys.argv[1]
@@ -344,6 +375,11 @@ if __name__ == "__main__":
   elif task == "walk2":
     robot.standUp()
     robot.walk2(1.0)
+    robot.sitDown()
+    robot.stopServos()
+  elif task == "walk6":
+    robot.standUp()
+    robot.walk6(1.0)
     robot.sitDown()
     robot.stopServos()
   else:
