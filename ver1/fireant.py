@@ -1,7 +1,7 @@
 """
   SERVO SHIELD FireAnt control via USB cable
   usage:
-         ./fireant.py <Uno|Due> [calibrate|walk|readTest] [<input logfile> [F|FF]]
+         ./fireant.py <Uno|Due|DueBT> [calibrate|walk|walk2|readTest] [<input logfile> [F|FF]]
 """
 import sys
 import os
@@ -55,6 +55,7 @@ class FireAnt:
     self.cmdId = 0
     self.receivedCmdId = None
     self.forceLimit = 4000
+    self.headAnglesCmd = [0,0,0,0,0]
     if runInit:
       self.init()
 
@@ -143,7 +144,7 @@ class FireAnt:
     angles = []
     for xyz in legXYZ:
       angles.extend( pos2angles10thDeg( xyz, abc=abc ) )
-    angles += [0,0,0,0,0] # Head & Pincers
+    angles += self.headAnglesCmd # Head & Pincers
     cmd = [angle*servoDir+offset for angle, servoDir, offset in zip(angles, servoDirs, self.servoOffset)]
     if STOP_SERVO in self.lastCmd:
       prev = cmd[:]
@@ -209,6 +210,7 @@ class FireAnt:
     while self.time < startTime+duration:
       self.update( cmd )
 
+
   def walk( self, dist ):
     print "walk"
     up,down = -0.02, -0.11
@@ -231,6 +233,35 @@ class FireAnt:
       self.wait(t)
       dist -= 8*math.hypot(sx,sy)
 #      self.syncCmdId()
+
+
+  def walk2( self, dist ):
+    "preparation for walk into stairs 2+2+2 legs"
+    print "walk2"
+    up,down = -0.02, -0.11
+    sx = 0.02 # step
+    sy = 0.0
+    a = math.radians(0.0) # rotation, correction angle
+    d = 0.125
+    la = math.radians(30.) # legs angle
+    while dist > 0:
+      # move front legs forward
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)+sx, up),  (d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, up),  (d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down)] )
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down)] )
+
+      # move center leg while in place
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, up),  (d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, up),  (d*cos(-la+a)-sy, d*sin(-la+a)-sx, down)] )
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down)] )
+
+      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, up),
+                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, up)] )
+      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, down),
+                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, down)] )
+      dist -= 8*math.hypot(sx,sy)
 
 
   def calibrate( self, duration=3.0 ):
@@ -256,7 +287,7 @@ class FireAnt:
       print hex(ord(ch)),
 
 if __name__ == "__main__":
-  if len(sys.argv) < 3 or sys.argv[2] not in ["calibrate", "walk", "readTest"]:
+  if len(sys.argv) < 3 or sys.argv[2] not in ["calibrate", "walk", "walk2", "readTest"]:
     print __doc__
     sys.exit(-1)
   robotName = sys.argv[1]
@@ -272,7 +303,7 @@ if __name__ == "__main__":
         replayAssert = False
       else:
         com = ReplyLogInputsOnly( filename )
-  assert robotName in ['Uno', 'Due'], robotName
+  assert robotName in ['Uno', 'Due', 'DueBT'], robotName
 
   if filename:
     if com == None:
@@ -282,8 +313,9 @@ if __name__ == "__main__":
     if sys.platform == 'linux2':
       com = LogIt( serial.Serial( '/dev/ttyUSB0', SERIAL_BAUD ) )
     else:
-      com = LogIt( serial.Serial( {'Uno':"COM9", 'Due':"COM8"}[robotName], SERIAL_BAUD ) )
+      com = LogIt( serial.Serial( {'Uno':"COM9", 'Due':"COM8", 'DueBT':"COM12"}[robotName], SERIAL_BAUD ) )
     verbose = False
+  robotName = robotName[:3]
 
   if task == "readTest":
     robot = FireAnt( robotName, com, runInit=False )
@@ -307,6 +339,11 @@ if __name__ == "__main__":
   elif task == "walk":
     robot.standUp()
     robot.walk(10.0)
+    robot.sitDown()
+    robot.stopServos()
+  elif task == "walk2":
+    robot.standUp()
+    robot.walk2(1.0)
     robot.sitDown()
     robot.stopServos()
   else:
