@@ -27,7 +27,7 @@ def pos2angles10thDeg( xyz, abc ):
   # for simplicity ignore solutions under first segment
   d = math.hypot( x, y )
   if a > d:
-    raise Unsolvable()
+    raise Unsolvable( "a > d" + str((a,d)) )
   # solve triangle in already turned leg plane (xy vs. z)
   ta,tb,tc = triangleAngles( b, c, math.hypot( d-a, z ) )
   a1 = math.atan2( y, x ) 
