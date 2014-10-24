@@ -1,7 +1,7 @@
 """
   SERVO SHIELD FireAnt control via USB cable
   usage:
-         ./fireant.py <Uno|Due|DueBT> [calibrate|walk|walk2|readTest] [<input logfile> [F|FF]]
+         ./fireant.py <Uno|Due|DueBT> [calibrate|walk(2,6)|upDown|readTest] [<input logfile> [F|FF]]
 """
 import sys
 import os
@@ -318,7 +318,7 @@ class FireAnt:
       print hex(ord(ch)),
 
 if __name__ == "__main__":
-  if len(sys.argv) < 3 or sys.argv[2] not in ["calibrate", "walk", "walk2", "walk6", "readTest"]:
+  if len(sys.argv) < 3 or sys.argv[2] not in ["calibrate", "walk", "walk2", "walk6", "upDown", "readTest"]:
     print __doc__
     sys.exit(-1)
   robotName = sys.argv[1]
@@ -367,6 +367,10 @@ if __name__ == "__main__":
   print "Battery BEFORE", robot.power
   if task == "calibrate":
     robot.calibrate()
+  elif task == "upDown":
+    robot.standUp()
+    robot.sitDown()
+    robot.stopServos()
   elif task == "walk":
     robot.standUp()
     robot.walk(10.0)
