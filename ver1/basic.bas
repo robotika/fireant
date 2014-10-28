@@ -24,7 +24,9 @@ LIPOCUTOFF con		620*1024/500	;62*1024/5.0
 ADCSR = 0x30	;start scanning AD conversion
 
 HSERVOFEEDBACK
+;-------- SELECT sethserial1 for DIRECT or sehserial2 for ARDUINO serial line
 sethserial1 h38400	;h62500
+;sethserial2 h9600 ;h38400	;h62500
 
 gosub stopAllServos
 
