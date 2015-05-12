@@ -14,14 +14,17 @@ import struct
 from math import cos, sin
 
 sys.path.append( ".."+os.sep+"serial_servo") 
-from serial_servo import LogIt, ReplayLog, ReplyLogInputsOnly
+from serial_servo import LogIt, ReplayLog, ReplyLogInputsOnly, LogEnd
 sys.path.append( ".."+os.sep+"ver0") 
 from triangle import pos2angles10thDeg, angles10thDeg2pos
 
 verbose = False
 
+FORCE_LIMIT = 4000
+
+
 NUM_SERVOS = 24
-SERIAL_BAUD = 38400 #62500
+SERIAL_BAUD = 38400 #9600 #38400 #62500
 
 PACKET_START = chr(0xAB)
 STOP_SERVO = -30000+258  # -32768 # 0x8000
@@ -54,7 +57,7 @@ class FireAnt:
     self.lastCmd = None
     self.cmdId = 0
     self.receivedCmdId = None
-    self.forceLimit = 4000
+    self.forceLimit = FORCE_LIMIT
     self.headAnglesCmd = [0,0,0,0,0]
     if runInit:
       self.init()
@@ -115,6 +118,7 @@ class FireAnt:
     status = self.readStatus()
     self.writeCmd( cmd )
 #    print "%d\t%d\t%d\t%d\t%d\t%d" % (status[2:5] + tuple(cmd[:3]))
+#    print "SYNC", self.cmdId, self.receivedCmdId, self.cmdId-self.receivedCmdId
     return status
 
   def init( self ):
@@ -211,28 +215,27 @@ class FireAnt:
       self.update( cmd )
 
 
-  def walk( self, dist ):
-    print "walk"
-    up,down = -0.02, -0.11
-    sx = 0.02 # step
-    sy = 0.0
-    a = math.radians(0.3)
+  def walk( self, step, numSteps ):
+    sx,sy,sa = step
+    print "walk", (sx,sy,sa)
+#    up,down = -0.02, -0.11
+    up,down = -0.05, -0.11
+    a = sa+math.radians(0.3)
     d = 0.125
     la = math.radians(30.) # legs angle
     t = 0.0
-    while dist > 0:
-      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)-sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, up),  (d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
-                        (d*cos(la+a)-sy, d*sin(la+a)+sx, up),  (d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)+sx, up)] )
-      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)-sx, down),(d*cos(-a)+sy, d*sin(-a)+sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down),
-                        (d*cos(la+a)-sy, d*sin(la+a)+sx, down),(d*cos(-a)+sy, d*sin(-a)-sx, down),(d*cos(-la+a)-sy, d*sin(-la+a)+sx, down)] )
+    lr = 0.0
+    for i in xrange(numSteps):
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)-sx, down+lr),(d*cos(-a)+sy, d*sin(-a)+sx, up+lr),  (d*cos(-la+a)-sy, d*sin(-la+a)-sx, down+lr),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, up-lr),  (d*cos(-a)+sy, d*sin(-a)-sx, down-lr),(d*cos(-la+a)-sy, d*sin(-la+a)+sx, up-lr)] )
+      self.setLegsXYZ( [(d*cos(la+a)-sy, d*sin(la+a)-sx, down+lr),(d*cos(-a)+sy, d*sin(-a)+sx, down+lr),(d*cos(-la+a)-sy, d*sin(-la+a)-sx, down+lr),
+                        (d*cos(la+a)-sy, d*sin(la+a)+sx, down-lr),(d*cos(-a)+sy, d*sin(-a)-sx, down-lr),(d*cos(-la+a)-sy, d*sin(-la+a)+sx, down-lr)] )
       self.wait(t)
-      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)+sx, up),  (d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, up),
-                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)+sx, up),    (d*cos(-la-a)+sy, d*sin(-la-a)-sx, down)] )
-      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)+sx, down),(d*cos(a)-sy, d*sin(a)-sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, down),
-                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down),(d*cos(a)-sy, d*sin(a)+sx, down),  (d*cos(-la-a)+sy, d*sin(-la-a)-sx, down)] )
+      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)+sx, up+lr),  (d*cos(a)-sy, d*sin(a)-sx, down+lr),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, up+lr),
+                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down-lr),(d*cos(a)-sy, d*sin(a)+sx, up-lr),    (d*cos(-la-a)+sy, d*sin(-la-a)-sx, down-lr)] )
+      self.setLegsXYZ( [(d*cos(la-a)+sy, d*sin(la-a)+sx, down+lr),(d*cos(a)-sy, d*sin(a)-sx, down+lr),  (d*cos(-la-a)+sy, d*sin(-la-a)+sx, down+lr),
+                        (d*cos(la-a)+sy, d*sin(la-a)-sx, down-lr),(d*cos(a)-sy, d*sin(a)+sx, down-lr),  (d*cos(-la-a)+sy, d*sin(-la-a)-sx, down-lr)] )
       self.wait(t)
-      dist -= 8*math.hypot(sx,sy)
-#      self.syncCmdId()
 
 
   def walk2( self, dist ):
@@ -375,28 +378,33 @@ if __name__ == "__main__":
 
   robot = FireAnt( robotName, com )
   print "Battery BEFORE", robot.power
-  if task == "calibrate":
-    robot.calibrate()
-  elif task == "upDown":
-    robot.standUp()
-    robot.sitDown()
-    robot.stopServos()
-  elif task == "walk":
-    robot.standUp()
-    robot.walk(10.0)
-    robot.sitDown()
-    robot.stopServos()
-  elif task == "walk2":
-    robot.standUp()
-    robot.walk2(1.0)
-    robot.sitDown()
-    robot.stopServos()
-  elif task == "walk6":
-    robot.standUp()
-    robot.walk6(1.0)
-    robot.sitDown()
-    robot.stopServos()
-  else:
-    print "UNKNOWN TASK", task
+  try:  
+    if task == "calibrate":
+      robot.calibrate()
+    elif task == "upDown":
+      robot.standUp()
+      robot.sitDown()
+      robot.stopServos()
+    elif task == "walk":
+      robot.standUp()
+      robot.walk( step=(0.02, 0.0, 0.0), numSteps=2) 
+      robot.walk( step=(0.0, -0.02, 0.0), numSteps=2) 
+      robot.walk( step=(0.0, 0.0, math.radians(5)), numSteps=2) 
+      robot.sitDown()
+      robot.stopServos()
+    elif task == "walk2":
+      robot.standUp()
+      robot.walk2(1.0)
+      robot.sitDown()
+      robot.stopServos()
+    elif task == "walk6":
+      robot.standUp()
+      robot.walk6(1.0)
+      robot.sitDown()
+      robot.stopServos()
+    else:
+      print "UNKNOWN TASK", task
+  except LogEnd:
+    pass
   print "Battery AFTER", robot.power
 
