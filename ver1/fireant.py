@@ -286,7 +286,9 @@ if __name__ == "__main__":
       com = ReplayLog( filename, assertWrite=replayAssert )
     verbose = False #True
   else:
-    if sys.platform == 'linux2':
+    if sys.platform == 'linux2' and os.uname()[1] == "raspberrypi":
+      com = LogIt( serial.Serial( '/dev/ttyAMA0', SERIAL_BAUD ) )
+    elif sys.platform == 'linux2':
       com = LogIt( serial.Serial( '/dev/ttyUSB0', SERIAL_BAUD ) )
     else:
       com = LogIt( serial.Serial( {'Uno':"COM9", 'Due':"COM8", 'DueBT':"COM12"}[robotName], SERIAL_BAUD ) )
